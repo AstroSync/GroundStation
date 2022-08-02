@@ -1,9 +1,9 @@
 from apscheduler.job import Job
 from fastapi import APIRouter
 
-from GS_backend.database_api import pending_collection, completed_collection, failed_collection
-from GS_backend.hardware.naku_device_api import device
-from GS_backend.models import RegisterSessionModel
+from ground_station.database_api import pending_collection, completed_collection, failed_collection
+from ground_station.hardware.naku_device_api import device
+from ground_station.models import RegisterSessionModel
 
 router = APIRouter(prefix="/schedule", tags=["Schedule"])
 

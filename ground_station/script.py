@@ -1,4 +1,4 @@
-from GS_backend.hardware.radio.lora_controller import LoRa_Controller
+from ground_station.hardware.radio.lora_controller import LoRa_Controller
 
 lora = LoRa_Controller()
 lora.init()

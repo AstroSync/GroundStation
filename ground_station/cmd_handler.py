@@ -1,6 +1,6 @@
 import inspect
 import re
-from hardware.naku_device_api import device
+from ground_station.hardware.naku_device_api import device
 
 
 def get_available_methods():

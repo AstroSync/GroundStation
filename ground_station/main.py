@@ -5,8 +5,8 @@ import uvicorn
 import aiohttp
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from GS_backend.hardware.naku_device_api import device
-from GS_backend.routers import basic, websocket_api, schedule, radio, rotator
+from ground_station.hardware.naku_device_api import device
+from ground_station.routers import basic, websocket_api, schedule, radio, rotator
 
 device.connect(tx_port=f'{os.environ.get("TX_PORT", "COM46")}',
                rx_port=f'{os.environ.get("RX_PORT", "COM36")}',

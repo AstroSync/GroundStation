@@ -1,7 +1,7 @@
 from __future__ import annotations
 import time
 
-from GS_backend.hardware.radio.serial_interface import SerialInterface
+from ground_station.hardware.radio.serial_interface import SerialInterface
 
 
 class Registers(dict):

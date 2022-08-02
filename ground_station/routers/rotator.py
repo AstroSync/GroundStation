@@ -3,8 +3,8 @@ import time
 
 from fastapi import APIRouter
 
-from GS_backend.hardware.naku_device_api import device
-from GS_backend.models import RotatorModel
+from ground_station.hardware.naku_device_api import device
+from ground_station.models import RotatorModel
 
 router = APIRouter(prefix="/rotator", tags=["Rotator"])
 

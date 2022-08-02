@@ -1,7 +1,7 @@
 from __future__ import annotations
 import time
 
-from GS_backend.hardware.radio.lora_serial_driver import LoRa_Driver, Registers
+from ground_station.hardware.radio.lora_serial_driver import LoRa_Driver, Registers
 
 
 class LoRa_Controller(LoRa_Driver):

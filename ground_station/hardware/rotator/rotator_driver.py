@@ -1,5 +1,4 @@
 import glob
-import queue
 import sys
 import threading
 import time
@@ -9,7 +8,7 @@ import serial.tools.list_ports
 import serial
 from serial import SerialBase
 
-from GS_backend.hardware.rotator.rotator_models import RotatorModel, RotatorAxisModel
+from ground_station.hardware.rotator.rotator_models import RotatorModel, RotatorAxisModel
 
 
 def get_available_ports():

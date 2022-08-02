@@ -13,11 +13,11 @@ from fastapi.responses import JSONResponse
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 from io import StringIO
-from GS_backend.database_api import db_register_new_session, get_all_sessions
-from GS_backend.hardware.naku_device_api import device
-from GS_backend.models import RegisterSessionModel
-from GS_backend.propagator.celestrak_api import get_sat_name_and_num
-from GS_backend.propagator.propagate import get_sessions_for_sat
+from ground_station.database_api import db_register_new_session, get_all_sessions
+from ground_station.hardware.naku_device_api import device
+from ground_station.models import RegisterSessionModel
+from ground_station.propagator.celestrak_api import get_sat_name_and_num
+from ground_station.propagator.propagate import get_sessions_for_sat
 
 router = APIRouter(tags=["Main"])
 sat_names = get_sat_name_and_num(os.path.join(os.path.dirname(__file__), "../propagator/active.json"))

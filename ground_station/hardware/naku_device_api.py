@@ -10,9 +10,9 @@ from pymongo import MongoClient
 from pytz import UTC, utc
 from skyfield.api import load
 
-from GS_backend.hardware.radio.lora_controller import LoRa_Controller
-from GS_backend.hardware.rotator.rotator_driver import RotatorDriver
-from GS_backend.propagator.propagate import rotator_track, RotatorPathData
+from ground_station.hardware.radio.lora_controller import LoRa_Controller
+from ground_station.hardware.rotator.rotator_driver import RotatorDriver
+from ground_station.propagator.propagate import rotator_track, RotatorPathData
 
 
 user_script = """

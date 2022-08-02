@@ -2,8 +2,8 @@ from typing import Union
 
 from fastapi import APIRouter
 
-from GS_backend.hardware.naku_device_api import device
-from GS_backend.models import LoRaConfig, FSK_Config
+from ground_station.hardware.naku_device_api import device
+from ground_station.models import LoRaConfig, FSK_Config
 
 router = APIRouter(prefix="/radio", tags=["Radio"])
 

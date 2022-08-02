@@ -18,6 +18,7 @@ celery = "^5.2.7"
 pyserial = "^3.5"
 requests = "^2.28.1"
 aiohttp = "^3.8.1"
+dateutils = "^0.6.12"
 
 [tool.poetry.dev-dependencies]
 

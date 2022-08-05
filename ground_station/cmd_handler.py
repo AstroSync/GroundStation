@@ -1,9 +1,15 @@
+import ast
 import inspect
 import re
 from ground_station.hardware.naku_device_api import device
 
 
 def get_available_methods():
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """
     return [{
                 "module": getattr(device_module, 'api_name'),
                 "doc": inspect.getdoc(getattr(device_module, func)),
@@ -19,6 +25,15 @@ available_methods = get_available_methods()
 
 
 def get_help_string(argument=None, delimiter=' '):
+    """_summary_
+
+    Args:
+        argument (_type_, optional): _description_. Defaults to None.
+        delimiter (str, optional): _description_. Defaults to ' '.
+
+    Returns:
+        _type_: _description_
+    """
     methods = available_methods
     help_string = f'Undefined function {argument}'
     if argument:
@@ -33,6 +48,15 @@ def get_help_string(argument=None, delimiter=' '):
 
 
 def cmd_handler(cmd_string: str, delimiter=' '):
+    """_summary_
+
+    Args:
+        cmd_string (str): _description_
+        delimiter (str, optional): _description_. Defaults to ' '.
+
+    Returns:
+        _type_: _description_
+    """
     cmd_string = re.sub(' +', ' ', cmd_string).lstrip(' ')  # replace several spaces with one
     arg_string = re.search(r'\((.*?)\)', cmd_string)
     if arg_string:
@@ -48,8 +72,8 @@ def cmd_handler(cmd_string: str, delimiter=' '):
             kwargs = {}
             arg_list = []
             if arg_string is not None and arg_string != '':
-                arg_list = [eval(arg) for arg in arg_string.split(', ') if '=' not in arg]
-                [kwargs.update(dict([arg.split("=")])) for arg in arg_string.split(', ') if '=' in arg]
+                arg_list = [ast.literal_eval(arg) for arg in arg_string.split(', ') if '=' not in arg]
+                _ = [kwargs.update(dict([arg.split("=")])) for arg in arg_string.split(', ') if '=' in arg]
         except (TypeError, SyntaxError):
             return 'Incorrect argument type'
         return execute_cmd(cmd, arg_list, kwargs)
@@ -60,6 +84,16 @@ def cmd_handler(cmd_string: str, delimiter=' '):
 
 
 def execute_cmd(cmd: str, args: list, kwargs: dict) -> str:
+    """_summary_
+
+    Args:
+        cmd (str): _description_
+        args (list): _description_
+        kwargs (dict): _description_
+
+    Returns:
+        str: _description_
+    """
     try:
         result = {}
         exec(f"""
@@ -71,5 +105,6 @@ try:
 except Exception as ex:
     exec_result = ex""", globals(), result)
         return result['exec_result']
-    except Exception as e:
-        return f'Error: {e}'
+    except Exception as err:
+        return f'Error: {err}'
+

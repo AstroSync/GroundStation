@@ -1,7 +1,5 @@
 import datetime
 from typing import Union
-
-from fastapi import UploadFile
 from pydantic import BaseModel
 
 
@@ -37,7 +35,6 @@ class LoRaConfig(BaseModel):
 
 class FSK_Config(BaseModel):
     frequency: float
-    ...
 
 
 class UserSatelliteModel(BaseModel):

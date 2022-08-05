@@ -1,16 +1,16 @@
 from __future__ import annotations
 import time
 
-from ground_station.hardware.radio.lora_serial_driver import LoRa_Driver, Registers
+from ground_station.hardware.radio.lora_serial_driver import LoRaDriver, Registers
 
 
-class LoRa_Controller(LoRa_Driver):
+class LoRaController(LoRaDriver):
     def __init__(self, api_name='radio', **kwargs):
-        super(LoRa_Controller, self).__init__(**kwargs)
+        super().__init__(**kwargs)  # super(LoRa_Controller, self).__init__(**kwargs)
         self.api_name = api_name
         self.coding_rate = kwargs.get('ecr', self.cr.CR5)  # error coding rate
-        self.bw = kwargs.get('bw', self.bw.BW250)  # bandwidth
-        self.sf = kwargs.get('sf', self.sf.SF10)  # spreading factor
+        self.bandwidth = kwargs.get('bw', self.bw.BW250)  # bandwidth
+        self.spread_factor = kwargs.get('sf', self.sf.SF10)  # spreading factor
         self.freq = kwargs.get('freq', 436700000)   # 436700000
         self.crc = kwargs.get('crc', True)  # check crc
         self.tx_power = kwargs.get('tx_power', 11)  # dB
@@ -29,9 +29,9 @@ class LoRa_Controller(LoRa_Driver):
         self.set_lora_mode()
         self.set_explicit_header()
         self.set_coding_rate(self.coding_rate)
-        self.set_bandwidth(self.bw)
-        self.set_sf(self.sf)
-        self.set_crc_on() if self.crc else self.set_crc_off()
+        self.set_bandwidth(self.bandwidth)
+        self.set_sf(self.spread_factor)
+        _ = self.set_crc_on() if self.crc else self.set_crc_off()
         self.set_tx_power(self.tx_power, self.rfo)
         self.set_sync_word(self.sync_word)
         self.set_preamble_length(self.preamble_len)
@@ -45,7 +45,7 @@ class LoRa_Controller(LoRa_Driver):
         self.set_low_data_rate_optimize(True)
 
     def connect(self, port: str):
-        connection_status = super(LoRa_Controller, self).connect(port)
+        connection_status = super(LoRaController, self).connect(port)
         if connection_status:
             print('Radio connected.\nStart initialization...')
             self.init()
@@ -73,22 +73,20 @@ class LoRa_Controller(LoRa_Driver):
             self.set_standby_mode()
         self.set_rx_continuous_mode()
 
-    def __calculate_packet(self, packet: list[int], force_optimization=True) -> tuple[bool, int, int]:
-        ecr = 4 + self.coding_rate // 2
-        if self.implicit_mode:
-            payload_size = self.payload_size
-        else:
-            payload_size = len(packet)
-        t_sym = 2 ** self.sf / self.bw * 1000
-        optimization_flag = True if force_optimization else t_sym > 16
-        preamble_time = (self.preamble_len + 4.25) * t_sym
-        tmp_poly = (8 * payload_size - 4 * self.sf + 28 + 16 - 20 * self.implicit_mode)
-        if tmp_poly < 0:
-            tmp_poly = 0
-        payload_symbol_nb = 8 + (tmp_poly / (4 * (self.sf - 2 * optimization_flag))) * ecr
-        payload_time = payload_symbol_nb * t_sym
-        packet_time = payload_time + preamble_time
-        return optimization_flag, packet_time, payload_time
+    # def __calculate_packet(self, packet: list[int], force_optimization=True) -> tuple[bool, int, int]:
+    #     ecr = 4 + self.coding_rate // 2
+    #     if self.implicit_mode:
+    #         payload_size = self.payload_size
+    #     else:
+    #         payload_size = len(packet)
+    #     t_sym = 2 ** self.spread_factor / self.bandwidth * 1000
+    #     optimization_flag = True if force_optimization else t_sym > 16
+    #     preamble_time = (self.preamble_len + 4.25) * t_sym
+    #     tmp_poly = max((8 * payload_size - 4 * self.spread_factor + 28 + 16 - 20 * self.implicit_mode), 0)
+    #     payload_symbol_nb = 8 + (tmp_poly / (4 * (self.spread_factor - 2 * optimization_flag))) * ecr
+    #     payload_time = payload_symbol_nb * t_sym
+    #     packet_time = payload_time + preamble_time
+    #     return optimization_flag, packet_time, payload_time
 
     def get_rssi_packet(self) -> int:
         return self.interface.read(self.reg.REG_PKT_RSSI_VALUE) - (164 if self.freq < 0x779E6 else 157)
@@ -130,8 +128,7 @@ class LoRa_Controller(LoRa_Driver):
             snr, rssi_pkt = self.get_snr_and_rssi()
             self.reset_irq_flags()
             return data, snr, rssi_pkt
-        else:
-            return [], None, None
+        return [], None, None
 
     def dump_memory(self):
         dump_mem = self.get_all_registers()
@@ -140,7 +137,7 @@ class LoRa_Controller(LoRa_Driver):
 
 
 if __name__ == '__main__':
-    lora = LoRa_Controller()
+    lora = LoRaController()
     lora.connect(port='COM3')
     print(lora.dump_memory())
     # lora.send(b'hello' * 50)

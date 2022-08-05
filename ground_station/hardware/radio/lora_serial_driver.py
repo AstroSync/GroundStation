@@ -16,10 +16,10 @@ class Registers(dict):
     #      for address, reg in enumerate(regs, start=start)]
 
     def __str__(self):
-        return "".join([f'{k}: {v:#02x}\n' if type(v) == int else f'{k}: {v}\n' for k, v in self.items()])
+        return "".join([f'{k}: {v:#02x}\n' if isinstance(v, int) else f'{k}: {v}\n' for k, v in self.items()])
 
 
-class LoRa_Driver:
+class LoRaDriver:
     reg = Registers({'REG_FIFO': 0x00,
                      'REG_OP_MODE': 0x01,
                      'REG_FR_MSB': 0x06,
@@ -90,7 +90,7 @@ class LoRa_Driver:
                     'CR7': 3 << 1,
                     'CR8': 4 << 1})
 
-    def __init__(self, **kwargs):
+    def __init__(self):
         self.interface = SerialInterface()
         self.rfo = 0x70
         self.pa_boost = 0xf0
@@ -122,17 +122,17 @@ class LoRa_Driver:
     def set_payload(self, size: int):
         self.interface.write(self.reg.REG_PAYLOAD_LENGTH, [size])
 
-    def set_coding_rate(self, cr: int):
+    def set_coding_rate(self, coding_rate: int):
         current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_1) & 0xf1
-        self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | cr])
+        self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | coding_rate])
 
-    def set_bandwidth(self, bw: int):
+    def set_bandwidth(self, bandwidth: int):
         current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_1) & 0x0F
-        self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | bw])
+        self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | bandwidth])
 
-    def set_sf(self, sf: int):
+    def set_sf(self, spreading_factor: int):
         current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0x0F
-        self.interface.write(self.reg.REG_MODEM_CONFIG_2, [current_mode | sf])
+        self.interface.write(self.reg.REG_MODEM_CONFIG_2, [current_mode | spreading_factor])
 
     def set_crc_on(self):
         current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0xfb
@@ -218,7 +218,7 @@ class LoRa_Driver:
 
 
 if __name__ == '__main__':
-    lora = LoRa_Driver()
+    lora = LoRaDriver()
     # print(lora.mode)
     lora.interface.reset()
     time.sleep(0.1)

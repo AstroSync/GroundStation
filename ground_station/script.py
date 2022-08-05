@@ -1,6 +1,6 @@
-from ground_station.hardware.radio.lora_controller import LoRa_Controller
+from ground_station.hardware.radio.lora_controller import LoRaController
 
-lora = LoRa_Controller()
+lora = LoRaController()
 lora.init()
 data = lora.rx_done_isr()
 if data is not None:

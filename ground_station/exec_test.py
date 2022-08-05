@@ -5,24 +5,24 @@ from io import StringIO
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 
-stop_flag = True
-import ast
+STOP_FLAG = True
 
 def api_func(i: int):
-    if stop_flag:
+    if STOP_FLAG:
         raise Exception('STOP SCRIPT')
     print(i)
     time.sleep(1)
 
 
-script = """
+SCRIPT = """
 i = 0
 while True:
     i += 1
     if stop_flag:
-        prin
+        print('stop')
+        break
     api_func(i)
-    
+
 """
 
 
@@ -50,6 +50,7 @@ def pylint_check(path: str):
 # def is_valid_python2():
 #     from flake8.api import legacy as flake8
 #     Run(['script.py'])
+
 
 if __name__ == '__main__':
     # print(type(compile(script, "<string>", 'exec')))

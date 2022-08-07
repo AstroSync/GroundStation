@@ -9,12 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from ground_station.hardware.naku_device_api import device
 from ground_station.routers import basic, websocket_api, schedule, radio, rotator
 
-device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "6")}',
-               rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BIA")}',
-               radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJA")}')
-device.start()
+# device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "/dev/ttyUSB1")}',  # "6"
+#                rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BI")}',  # "A50285BIA"
+#                radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJ")}')  # "AH06T3YJ"
+# device.start()
 
-device.rotator.print_flag = True
+# device.rotator.print_flag = True
 
 app = FastAPI(title="Ground station API")
 app.include_router(rotator.router)
@@ -55,7 +55,7 @@ async def init_loop():
         await asyncio.sleep(5)
     print(f'There is {len(ast.literal_eval(result))} pending sessions')
 
-asyncio.run(init_loop())
+# asyncio.run(init_loop())
 
 # uvicorn GS_backend.__main__:app --proxy-headers --host 0.0.0.0 --port 8080
 

@@ -110,7 +110,7 @@ class NAKU(metaclass=Singleton):
     def connect(self, rx_port_or_serial_id: str, tx_port_or_serial_id: str, radio_port_or_serial_id: str):
         ports = convert_to_port(rx_port=rx_port_or_serial_id, tx_port=tx_port_or_serial_id,
                                 radio_port=radio_port_or_serial_id)
-        if None is ports:
+        if None in ports:
             raise Exception(f'Some ports are unavailable {ports}')
         self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])
         self.radio.connect(port=ports['radio_port'])

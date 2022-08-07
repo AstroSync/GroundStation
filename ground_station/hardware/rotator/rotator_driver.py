@@ -151,7 +151,7 @@ class RotatorDriver:
 
                         data = self.reciever.read_until(b'\r\r')
                         data = data.decode('cp1251').replace('\r', '\n')
-                        self._print(f"\ndata: {data}")
+                        # self._print(f"\ndata: {data}")
 
                         data = data.split('\n')
                         attributes = [float(val.split(': ')[1]) for val in data if val not in ('ACK', '')][:-1]

@@ -55,7 +55,7 @@ async def init_loop():
         await asyncio.sleep(5)
     print(f'There is {len(ast.literal_eval(result))} pending sessions')
 
-# asyncio.run(init_loop())
+asyncio.run(init_loop())
 
 # uvicorn GS_backend.__main__:app --proxy-headers --host 0.0.0.0 --port 8080
 

@@ -112,9 +112,13 @@ class NAKU(metaclass=Singleton):
                                 radio_port=radio_port_or_serial_id)
         if None in ports:
             raise Exception(f'Some ports are unavailable {ports}')
-        self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])
-        self.radio.connect(port=ports['radio_port'])
-        self.connection_status = True
+        try:
+            self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])
+            self.radio.connect(port=ports['radio_port'])
+            self.connection_status = True
+        except Exception as err:
+            print(err)
+            self.connection_status = False
 
     def add_new_session(self, user_script: str, sat_name: str, start_time: datetime, end_time: datetime,
                         prepare_time: timedelta = timedelta(seconds=60)):

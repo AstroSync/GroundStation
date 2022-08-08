@@ -1,5 +1,6 @@
 .git
 .idea
+.history
 *.log
 *.json
 *.txt

@@ -12,6 +12,7 @@ from ground_station.hardware.rotator.rotator_models import RotatorModel, Rotator
 def try_to_connect(com_port: str, baudrate: int) -> Optional[SerialBase]:
     try:
         bus = serial.Serial(com_port, baudrate, write_timeout=2)
+        print(f'bus.is_open: {bus.isOpen()}')
         bus.reset_input_buffer()
         bus.reset_output_buffer()
         return bus

@@ -17,5 +17,6 @@ services:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
       - "/dev/ttyUSB1:/dev/ttyUSB1"
       - "/dev/ttyUSB2:/dev/ttyUSB2"
-    command: tail -F anything
-    
+    # command: tail -F anything
+    volumes:
+      -.:/ground_station

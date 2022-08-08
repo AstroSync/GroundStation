@@ -57,6 +57,9 @@ class RotatorDriver:
         else:
             print('Rotator does not connected')
 
+    def __repr__(self):
+        return f'{self.rotator_model.__repr__}'
+
     def set_config(self, kwargs):
         """
         set rotator's config
@@ -168,7 +171,7 @@ class RotatorDriver:
                         axis_obj.boundary_start = float(attributes[2])
                         axis_obj.boundary_end = float(attributes[3])
                         if axis == 'Э':
-                            self._print(self.rotator_model.__str__())
+                            self._print(self.rotator_model)
                     elif 'ACK' in data:
                         print('CMD OK')
                     elif data == '\r':

@@ -1,8 +1,11 @@
 .git
 .idea
 *.log
+*.history
 *.json
 *.txt
+.vscode
+.venv
 poetry.lock
 __pycache__/
 __pycache__

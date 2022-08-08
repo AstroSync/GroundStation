@@ -1,9 +1,0 @@
-.git
-.idea
-.history
-*.log
-*.json
-*.txt
-poetry.lock
-__pycache__/
-__pycache__

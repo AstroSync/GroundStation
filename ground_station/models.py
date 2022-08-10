@@ -65,9 +65,9 @@ class RotatorAxis(BaseModel):
 class RotatorModel(BaseModel):
     az: RotatorAxis
     el: RotatorAxis = {'position': 0, 'speed': 2, 'acceleration': 1,
-                       'boundary_start': -90, 'boundary_end': 270, 'limits': True}
+                       'boundary_start': -90, 'boundary_end': 270, 'limits': True}  # type: ignore
 
 
-if __name__ == '__main__':
-    m = TaskModel()
-    print(m)
+# if __name__ == '__main__':
+#     m = TaskModel()
+#     print(m)

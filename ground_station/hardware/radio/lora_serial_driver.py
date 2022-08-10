@@ -6,16 +6,16 @@ from ground_station.hardware.radio.serial_interface import SerialInterface
 
 class Registers(dict):
     """dot.notation access to dictionary attributes"""
-    __getattr__ = dict.get
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+    __getattr__: int = dict.get  # type: ignore
+    __setattr__ = dict.__setitem__  # type: ignore
+    __delattr__ = dict.__delitem__  # type: ignore
 
     # def __init__.py(self, regs: list[str | tuple[str, int]], start: int):
     #     super(Registers, self).__init__.py()
     #     [self.__setattr__(reg, address) if type(reg) == str else self.__setattr__(reg[0], reg[1])
     #      for address, reg in enumerate(regs, start=start)]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "".join([f'{k}: {v:#02x}\n' if isinstance(v, int) else f'{k}: {v}\n' for k, v in self.items()])
 
 
@@ -90,62 +90,62 @@ class LoRaDriver:
                     'CR7': 3 << 1,
                     'CR8': 4 << 1})
 
-    def __init__(self):
-        self.interface = SerialInterface()
+    def __init__(self) -> None:
+        self.interface: SerialInterface = SerialInterface()
         self.rfo = 0x70
         self.pa_boost = 0xf0
 
     def connect(self, port: str) -> bool:
         return self.interface.connect(port=port)
 
-    def set_sleep_mode(self):
-        current_mode = self.interface.read(self.reg.REG_OP_MODE) & 0xf8
+    def set_sleep_mode(self) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_OP_MODE) & 0xf8
         self.interface.write(self.reg.REG_OP_MODE, [current_mode | self.mode.SLEEP_MODE])
 
-    def set_standby_mode(self):
-        current_mode = self.interface.read(self.reg.REG_OP_MODE) & 0xf8
+    def set_standby_mode(self) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_OP_MODE) & 0xf8
         self.interface.write(self.reg.REG_OP_MODE, [current_mode | self.mode.STDBY_MODE])
 
-    def set_lora_mode(self):
+    def set_lora_mode(self) -> None:
         self.set_sleep_mode()
-        current_mode = self.interface.read(self.reg.REG_OP_MODE) & 0x7f
+        current_mode: int = self.interface.read(self.reg.REG_OP_MODE) & 0x7f
         self.interface.write(self.reg.REG_OP_MODE, [current_mode | self.mode.LORA_MODE])
 
-    def set_implicit_header(self):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_1)
+    def set_implicit_header(self) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_1)
         self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | 0x01])
 
-    def set_explicit_header(self):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_1)
+    def set_explicit_header(self) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_1)
         self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | 0xfe])
 
-    def set_payload(self, size: int):
+    def set_payload(self, size: int) -> None:
         self.interface.write(self.reg.REG_PAYLOAD_LENGTH, [size])
 
-    def set_coding_rate(self, coding_rate: int):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_1) & 0xf1
+    def set_coding_rate(self, coding_rate: int) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_1) & 0xf1
         self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | coding_rate])
 
-    def set_bandwidth(self, bandwidth: int):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_1) & 0x0F
+    def set_bandwidth(self, bandwidth: int) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_1) & 0x0F
         self.interface.write(self.reg.REG_MODEM_CONFIG_1, [current_mode | bandwidth])
 
-    def set_sf(self, spreading_factor: int):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0x0F
+    def set_sf(self, spreading_factor: int) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0x0F
         self.interface.write(self.reg.REG_MODEM_CONFIG_2, [current_mode | spreading_factor])
 
-    def set_crc_on(self):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0xfb
+    def set_crc_on(self) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0xfb
         self.interface.write(self.reg.REG_MODEM_CONFIG_2, [current_mode | (0x01 << 2)])
 
-    def set_crc_off(self):
-        current_mode = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0xfb
+    def set_crc_off(self) -> None:
+        current_mode: int = self.interface.read(self.reg.REG_MODEM_CONFIG_2) & 0xfb
         self.interface.write(self.reg.REG_MODEM_CONFIG_2, [current_mode])
 
-    def __disable_ocp(self):
+    def __disable_ocp(self) -> None:
         self.interface.write(self.reg.REG_OCP, [0x1f])
 
-    def set_tx_power(self, power: int, pa_pin: int = 'PA_BOOST'):
+    def set_tx_power(self, power: int, pa_pin: int = 'PA_BOOST') -> None:
         """ power: from 0 to 20 """
         self.__disable_ocp()
         if pa_pin == self.rfo:
@@ -198,22 +198,22 @@ class LoRaDriver:
     def get_crc_flag(self):
         return self.interface.read(self.reg.REG_IRQ_FLAGS) & self.isr.IRQ_CRC
 
-    def reset_irq_flags(self):
+    def reset_irq_flags(self) -> None:
         self.interface.write(self.reg.REG_IRQ_FLAGS, [0xff])
 
-    def set_low_data_rate_optimize(self, optimization_flag: bool):
+    def set_low_data_rate_optimize(self, optimization_flag: bool) -> None:
         current_state = self.interface.read(self.reg.REG_MODEM_CONFIG_3) & 0xf7
         self.interface.write(self.reg.REG_MODEM_CONFIG_3, [current_state | (optimization_flag * (1 << 3))])
 
-    def set_tx_mode(self):
+    def set_tx_mode(self) -> None:
         current_mode = self.interface.read(self.reg.REG_OP_MODE) & 0xf8
         self.interface.write(self.reg.REG_OP_MODE, [current_mode | self.mode.TX_MODE])
 
-    def set_rx_continuous_mode(self):
+    def set_rx_continuous_mode(self) -> None:
         current_mode = self.interface.read(self.reg.REG_OP_MODE) & 0xf8
         self.interface.write(self.reg.REG_OP_MODE, [current_mode | self.mode.RXCONT_MODE])
 
-    def get_all_registers(self):
+    def get_all_registers(self) -> list[int]:
         return self.interface.read_several(0x01, 0x70)
 
 

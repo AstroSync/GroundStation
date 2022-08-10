@@ -4,6 +4,7 @@
 *.history
 *.json
 *.txt
+*.code-workspace
 .vscode
 .venv
 poetry.lock

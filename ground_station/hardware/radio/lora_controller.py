@@ -5,7 +5,7 @@ from ground_station.hardware.radio.lora_serial_driver import LoRaDriver, Registe
 
 
 class LoRaController(LoRaDriver):
-    def __init__(self, api_name='radio', **kwargs):
+    def __init__(self, api_name='radio', **kwargs) -> None:
         super().__init__(**kwargs)  # super(LoRa_Controller, self).__init__(**kwargs)
         self.api_name = api_name
         self.coding_rate = kwargs.get('ecr', self.cr.CR5)  # error coding rate
@@ -23,7 +23,7 @@ class LoRaController(LoRaDriver):
         self.implicit_mode = kwargs.get('implicit_mode', False)  # fixed payload size
         self.rx_timeout = 30
 
-    def init(self):
+    def init(self) -> None:
         self.interface.reset()
         time.sleep(0.1)
         self.set_lora_mode()
@@ -130,8 +130,8 @@ class LoRaController(LoRaDriver):
             return data, snr, rssi_pkt
         return [], None, None
 
-    def dump_memory(self):
-        dump_mem = self.get_all_registers()
+    def dump_memory(self) -> Registers:
+        dump_mem: list[int] = self.get_all_registers()
         mem = {k: dump_mem[v - 1] for k, v in self.reg.items()}
         return Registers(mem)
 

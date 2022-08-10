@@ -1,26 +1,26 @@
 from typing import Any
-from pymongo import MongoClient, collection
+from pymongo import MongoClient
+from pymongo.database import Database
+from pymongo.collection import Collection
 
-DB_CONNECTION_STATUS = False
-pending_collection: collection = None
-failed_collection: collection = None
-completed_collection: collection = None
+DB_CONNECTION_STATUS: bool = False
 
 try:
     print('try to connect to db...')
-    client = MongoClient(host='localhost', port=27017, username='root',
-                         password='rootpassword', authMechanism='DEFAULT', serverSelectionTimeoutMS=2000)
-    db = client['sessions']
+    client: MongoClient = MongoClient(host='localhost', port=27017, username='root',
+                                      password='rootpassword', authMechanism='DEFAULT',
+                                      serverSelectionTimeoutMS=2000)
+    db: Database = client['sessions']
     print("Connected to MongoDB")
-    DB_CONNECTION_STATUS = True
-    pending_collection = db['pending']
-    failed_collection = db['failed']
-    completed_collection = db['completed']
+    DB_CONNECTION_STATUS: bool = True
+    pending_collection: Collection = db['pending']
+    failed_collection: Collection = db['failed']
+    completed_collection: Collection = db['completed']
 except TimeoutError as e:
     print(f'Database connection failed: {e}')
 
 
-def db_register_new_session(data):
+def db_register_new_session(data) -> None:
     print(data)
     result = __check_same(data)
     print(result)

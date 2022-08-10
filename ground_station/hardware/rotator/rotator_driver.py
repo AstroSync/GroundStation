@@ -2,7 +2,7 @@ import ast
 import threading
 import time
 from queue import Empty, Queue
-from typing import Optional
+from typing import Any, NoReturn, Optional
 from serial import SerialBase
 import serial
 
@@ -16,30 +16,31 @@ def try_to_connect(com_port: str, baudrate: int) -> Optional[SerialBase]:
         bus.reset_output_buffer()
         return bus
     except serial.SerialException as err:
-        print(f'Rotator connection error: {err}')#dfdsf
+        print(f'Rotator connection error: {err}')
         return None
 
 
 class RotatorDriver:
-    def __init__(self, api_name='rotator'):
-        self.api_name = api_name
+    def __init__(self, api_name='rotator') -> None:
+        self.api_name: str = api_name
         self.reciever: Optional[SerialBase] = None
         self.transmitter: Optional[SerialBase] = None
-        self.restart_counter = 0
-        self.error_counter = 0
-        self.__lock = threading.Lock()
+        self.restart_counter: int = 0
+        self.error_counter: int = 0
+        self.__lock: threading.Lock = threading.Lock()
         self.rotator_model: RotatorModel = RotatorModel()
-        self.current_position = None
+        self.current_position: Optional[tuple[float, float]] = None
         # self.__previous_position = None
-        self.rx_thread = threading.Thread(name="rotator RX thread", target=self.rx_loop, daemon=True)
-        self.tx_thread = threading.Thread(name="rotator TX thread", target=self.tx_loop, daemon=True)
-        self.print_flag = False
-        self.connection_flag = False
+        self.rx_thread: threading.Thread = threading.Thread(name="rotator RX thread", target=self.rx_loop, daemon=True)
+        self.tx_thread: threading.Thread = threading.Thread(name="rotator TX thread", target=self.tx_loop, daemon=True)
+        self.print_flag: bool = False
+        self.connection_flag: bool = False
 
         self.tx_queue = Queue()
-        self.is_need_to_update_model = False
+        self.is_need_to_update_model: bool = False
+        self.tx_thread_sleep_time: float = 0.2
 
-    def connect(self, rx_port: str, tx_port: str):
+    def connect(self, rx_port: str, tx_port: str) -> None:
         self.reciever = try_to_connect(rx_port, 115200)
         self.transmitter = try_to_connect(tx_port, 115200)
         if self.reciever is not None and self.transmitter is not None:
@@ -57,17 +58,17 @@ class RotatorDriver:
         else:
             print('Rotator does not connected')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.rotator_model.__repr__}'
 
-    def set_config(self, kwargs):
+    def set_config(self, kwargs)-> None:
         """
         set rotator's config
         :param kwargs:
         :return:
         """
-        azimuth = RotatorAxisModel(**kwargs['az'])
-        elevation = RotatorAxisModel(**kwargs['el'])
+        azimuth: RotatorAxisModel = RotatorAxisModel(**kwargs['az'])
+        elevation: RotatorAxisModel = RotatorAxisModel(**kwargs['el'])
         if abs(azimuth.speed - self.rotator_model.azimuth.speed) > 0.05 or \
                 abs(elevation.speed - self.rotator_model.elevation.speed) > 0.05:
             self.set_speed(azimuth.speed, elevation.speed)
@@ -92,49 +93,59 @@ class RotatorDriver:
         else:
             self.queue_request_condition()
 
-    def queue_request_condition(self):
+    def queue_request_condition(self) -> None:
         self.tx_queue.put(b'Y\r')
         self.tx_queue.put(b'H\r')
         self.tx_queue.put(b'G0I\r')
         self.tx_queue.put(b'G1I\r')
 
-    def _print(self, message: str):
+    def _print(self, message: Any) -> None:
         if self.print_flag:
             print(f'{message}')
 
-    def tx_loop(self):
+    def tx_loop(self) -> NoReturn:
+        if self.transmitter is None:
+            raise RuntimeError('Rotator TX channel object must not be None')
         while True:
-            time.sleep(0.2)
+            time.sleep(self.tx_thread_sleep_time)
             with self.__lock:
                 try:
                     # print(self.tx_queue.queue)
-                    cmd = self.tx_queue.get_nowait()
+                    cmd: bytes = self.tx_queue.get_nowait()
                     self.transmitter.write(cmd)
+                    if self.tx_queue.qsize() > 10:
+                        print(f'self.tx_queue.qsize(): {self.tx_queue.qsize()}')
+                        self.tx_thread_sleep_time = 0.1
+                    else:
+                        self.tx_thread_sleep_time = 0.2
                 except Empty:
                     self.tx_queue.put(b'Y\r')
 
     # 'Y' command terminated by \r
     # 'G0I' command terminated by \r\r
 
-    def rx_loop(self):
+    def rx_loop(self) -> None:
         # TODO: add checking exception of "access error, permission denied"
+        if self.reciever is None:
+            raise RuntimeError('Rotator RX channel must not be None')
         try:
             while True:
                 try:
-                    data = self.reciever.read_until(b'\r')
+                    raw_data: bytes = self.reciever.read_until(b'\r')
 
-                    data = data.decode('cp1251')
-                    if 'Контроллер "РАДАНТ"' in data:
+                    decoded_data: str = raw_data.decode('cp1251')
+                    if 'Контроллер "РАДАНТ"' in decoded_data:
                         self.restart_counter += 1
                         self._print(f'Rotator has been restarted. Restart counter: {self.restart_counter}')
-                        self._print(data)
+                        self._print(decoded_data)
                         self._print(self.reciever.read_until(b'\r').decode('cp1251'))
                         self._print(self.reciever.read_until(b'\r').decode('cp1251'))
 
-                    elif 'OK' in data:
+                    elif 'OK' in decoded_data:
                         with self.__lock:
                             # self.__previous_position = self.current_position
-                            self.current_position = [ast.literal_eval(x.lstrip('0')) for x in data[2:].split(' ')]
+                            position: list[int] = [int(ast.literal_eval(x.lstrip('0'))) for x in decoded_data[2:].split(' ')]
+                            self.current_position = (position[0], position[1])
                             self.rotator_model.azimuth.position = self.current_position[0]
                             self.rotator_model.elevation.position = self.current_position[1]
                             # if self.__previous_position != self.current_position:
@@ -143,25 +154,25 @@ class RotatorDriver:
                             #     if self.is_need_to_update_model:
                             #         self.queue_request_condition()
                             #         self.is_need_to_update_model = False
-                    elif 'ERR!' in data:
+                    elif 'ERR!' in decoded_data:
                         with self.__lock:
                             self.error_counter += 1
                             self._print(f'Get error. Error counter: {self.error_counter}')
-                    elif 'Ось' in data:
+                    elif 'Ось' in decoded_data:
                         # data = ['Ось:', 'А', '0', '360\r'] or ['Ось:', 'Э', '-90', '270\r']
-                        splitted_data = data.split(' ')
-                        axis = splitted_data[1]
+                        splitted_data: list[str] = decoded_data.split(' ')
+                        axis: str = splitted_data[1]
 
-                        data = self.reciever.read_until(b'\r\r')
-                        data = data.decode('cp1251').replace('\r', '\n')
-                        self._print(f"\ndata: {data}")
+                        remaining_raw_data: bytes = self.reciever.read_until(b'\r\r')
+                        remaining_decoded_data: str = remaining_raw_data.decode('cp1251').replace('\r', '\n')
+                        # self._print(f"\ndata: {data}")
 
-                        data = data.split('\n')
-                        attributes = [float(val.split(': ')[1]) for val in data if val not in ('ACK', '')][:-1]
+                        data: list[str] = remaining_decoded_data.split('\n')
+                        attributes: list[float] = [float(val.split(': ')[1]) for val in data if val not in ('ACK', '')][:-1]
                         if axis == 'А':
-                            axis_obj = self.rotator_model.azimuth
+                            axis_obj: RotatorAxisModel = self.rotator_model.azimuth
                         elif axis == 'Э':
-                            axis_obj = self.rotator_model.elevation
+                            axis_obj: RotatorAxisModel = self.rotator_model.elevation
                         else:
                             raise ValueError('Incorrect rotator axis')
                         axis_obj.min_angle = float(splitted_data[2])
@@ -172,18 +183,19 @@ class RotatorDriver:
                         axis_obj.boundary_end = float(attributes[3])
                         if axis == 'Э':
                             self._print(self.rotator_model)
-                    elif 'ACK' in data:
-                        print('CMD OK')
-                    elif data == '\r':
+                    elif 'ACK' in decoded_data:
+                        # print('CMD OK')
+                        pass
+                    elif decoded_data == '\r':
                         pass
                     else:
-                        speed = data.split(' ')
+                        speed: list[str] = decoded_data.split(' ')
                         try:
                             self.rotator_model.azimuth.speed = float(speed[0])
                             self.rotator_model.elevation.speed = float(speed[1])
                         except ValueError:
-                            print(f'Get incorrect data: {data.encode()}')
-                except Exception as err:
+                            print(f'Get incorrect data: {decoded_data.encode()}')
+                except ValueError as err:
                     print(f'rx_loop error: {err}')
         except KeyboardInterrupt:
             print('Shutdown rotator driver')
@@ -207,19 +219,24 @@ class RotatorDriver:
         """
         self.tx_queue.put(bytes(f'G{axis}C{degree}\r'.encode()))
 
-    def set_axis_limit_flag(self, axis, flag: int) -> None:
+    def set_axis_limit_flag(self, axis: str, flag: int) -> None:
         """0: disable, 1: enable"""
         self.tx_queue.put(bytes(f'G{axis}L{flag}\r'.encode()))
 
-    def set_boundary_maximum_angle(self, axis, degree) -> None:
-        """ddd"""
-        self.tx_queue.put(bytes(f'G{axis}B{degree}\r'.encode()))
+    def set_boundary_maximum_angle(self, axis: str, degree: float) -> None:
+        """Set boundary max angle
 
-    def set_boundary_minimum_angle(self, axis, degree) -> None:
-        """ddd"""
-        self.tx_queue.put(bytes(f'G{axis}A{degree}\r'.encode()))
+        Args:
+            axis (int): 0 - azimuth, 1 - elevation
+            degree (float): degree value
+        """
+        self.tx_queue.put(bytes(f'G{axis}B{degree:.2f}\r'.encode()))
 
-    def __request(self, cmd: bytes, answer_length: int = 1):
+    def set_boundary_minimum_angle(self, axis: str, degree: float) -> None:
+        """ddd"""
+        self.tx_queue.put(bytes(f'G{axis}A{degree:.2f}\r'.encode()))
+
+    def __request(self, cmd: bytes, answer_length: int = 1) -> str:
         with self.__lock:
             if self.transmitter and self.reciever is not None:
                 self.transmitter.write(cmd)
@@ -248,7 +265,7 @@ class RotatorDriver:
     def get_version(self) -> str:
         return self.__request(b'G0H\r', 3)
 
-    def queue_request_version(self):
+    def queue_request_version(self) -> None:
         self.tx_queue.put(b'G0H\r')
 
     def stop_rotation(self) -> None:

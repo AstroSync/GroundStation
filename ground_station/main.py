@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from __future__ import annotations
 import ast
 import asyncio
@@ -20,7 +19,7 @@ except RuntimeError as err:
     print(err)
     sys.exit()
 
-# scheduler_worker.start()
+scheduler_worker.start()
 scheduler_worker.print_jobs()
 
 gs_device.rotator.print_flag = True
@@ -64,7 +63,7 @@ async def init_loop() -> None:
         await asyncio.sleep(5)
     print(f'There is {len(ast.literal_eval(result))} pending sessions')
 
-# # asyncio.run(init_loop())
+# asyncio.run(init_loop())
 
 # uvicorn GS_backend.__main__:app --proxy-headers --host 0.0.0.0 --port 8080
 

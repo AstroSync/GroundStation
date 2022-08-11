@@ -1,9 +1,16 @@
 .git
 .idea
 .history
+.venv
+.vscode
+.env
+GroundStation.code-workspace
+
 *.log
 *.json
 *.txt
 poetry.lock
+log
+data
 __pycache__/
 __pycache__

@@ -11,6 +11,7 @@ class SerialInterface:
     def connect(self, port: str) -> bool:
         try:
             self.connected_port = serial.Serial(port, 500000)
+            print(f'is open: {self.connected_port.isOpen()}')
             if self.connected_port.isOpen():
                 return True
             raise Exception("Device is not open")

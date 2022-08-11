@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .git
 .idea
 *.log
@@ -9,4 +10,21 @@
 .venv
 poetry.lock
 __pycache__/
+=======
+.git
+.idea
+.history
+.venv
+.vscode
+.env
+GroundStation.code-workspace
+
+*.log
+*.json
+*.txt
+poetry.lock
+log
+data
+__pycache__/
+>>>>>>> celery_integration
 __pycache__

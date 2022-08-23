@@ -5,8 +5,11 @@
 *.json
 *.txt
 *.code-workspace
+.pytest_cache
 .vscode
 .venv
+flower
+mongodb_data_container
 poetry.lock
 __pycache__/
 __pycache__

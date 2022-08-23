@@ -37,4 +37,14 @@ services:
         - 5672:5672
         - 15672:15672
     volumes:
-      -.:/ground_station
+      - .:/ground_station
+
+  mongodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongodb_data_container:/data/db

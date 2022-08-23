@@ -1,26 +1,20 @@
 from __future__ import annotations
 import ast
 import asyncio
-import os
-import sys
 import uvicorn
 import aiohttp
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from ground_station.hardware.naku_device_api import gs_device
 from ground_station.routers import basic, websocket_api, schedule, radio, rotator
-from ground_station.apscheduler_worker import scheduler_worker
 
-try:
-    gs_device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "6")}',
-                rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BIA")}',
-                radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJA")}')
-except RuntimeError as err:
-    print(err)
-    sys.exit()
-
-scheduler_worker.start()
-scheduler_worker.print_jobs()
+# try:
+#     gs_device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "6")}',
+#                 rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BIA")}',
+#                 radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJA")}')
+# except RuntimeError as err:
+#     print(err)
+#     sys.exit()
 
 gs_device.rotator.print_flag = True
 

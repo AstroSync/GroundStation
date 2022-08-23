@@ -10,7 +10,7 @@ from ground_station.hardware.rotator.rotator_models import RotatorModel, Rotator
 
 
 def try_to_connect(com_port: str, baudrate: int) -> Optional[SerialBase]:
-    try:
+    try:  # TODO: мб стоит поднимать исключение?
         bus = serial.Serial(com_port, baudrate, write_timeout=2)
         bus.reset_input_buffer()
         bus.reset_output_buffer()
@@ -38,7 +38,7 @@ class RotatorDriver:
 
         self.tx_queue = Queue()
         self.is_need_to_update_model: bool = False
-        self.tx_thread_sleep_time: float = 0.2
+        self.tx_thread_sleep_time: float = 0.1
 
     def connect(self, rx_port: str, tx_port: str) -> None:
         self.reciever = try_to_connect(rx_port, 115200)
@@ -115,9 +115,9 @@ class RotatorDriver:
                     self.transmitter.write(cmd)
                     if self.tx_queue.qsize() > 10:
                         print(f'self.tx_queue.qsize(): {self.tx_queue.qsize()}')
-                        self.tx_thread_sleep_time = 0.1
+                        self.tx_thread_sleep_time = 0.05
                     else:
-                        self.tx_thread_sleep_time = 0.2
+                        self.tx_thread_sleep_time = 0.1
                 except Empty:
                     self.tx_queue.put(b'Y\r')
 

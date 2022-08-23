@@ -5,6 +5,8 @@ disable=
       C0116,  # Missing function or method docstring
       W1309,  # Using an f-string that does not have any interpolated variables
       W0122,  # Use of exec
+      W4701,  # modified-iterating-list
+      C0103,  # snake_case variables
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
 # run arbitrary code.

@@ -56,8 +56,8 @@ class RotatorAxis(BaseModel):
     position: float = 0
     speed: float = 2
     acceleration: float = 1
-    boundary_start: float = 0
-    boundary_end: float = 360
+    boundary_start: float = -175
+    boundary_end: float = 515
     limits: bool = True
     # calibration: float
 

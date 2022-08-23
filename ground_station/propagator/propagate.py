@@ -141,7 +141,7 @@ class SatellitePath:
     def __init__(self, altitude: Angle, azimute: Angle, distance: Distance,
                  alt_rate: AngleRate, az_rate: AngleRate, dist_rate: Velocity, time_points: list[datetime]) -> None:
         self.altitude: np.ndarray = altitude.degrees  # type: ignore
-        self.azimuth: np.ndarray = convert_degrees(azimute.degrees)  # type: ignore
+        self.azimuth: np.ndarray = azimute.degrees  # type: ignore
         self.dist: np.ndarray = distance.km  # type: ignore
         self.alt_rate: np.ndarray = alt_rate.degrees.per_second  # type: ignore
         self.az_rate: np.ndarray = az_rate.degrees.per_second  # type: ignore
@@ -177,31 +177,31 @@ class SatellitePath:
         raise StopIteration
 
 
-def convert_degrees(seq):
-    """Recalculate angle sequence when it transits over 360 degrees.
-    e.g.: [358.5, 359.6, 0.2, 1.1] -> [358.5, 359.6, 360.2, 361.1]
-          [1.1, 0.2, 359.6, 358.5] -> [1.1, 0.2, -0.4, -1.5]
+# def convert_degrees(seq):
+#     """Recalculate angle sequence when it transits over 360 degrees.
+#     e.g.: [358.5, 359.6, 0.2, 1.1] -> [358.5, 359.6, 360.2, 361.1]
+#           [1.1, 0.2, 359.6, 358.5] -> [1.1, 0.2, -0.4, -1.5]
 
-    Args:
-        seq (ndarray | list[float]): the sequence of angles
+#     Args:
+#         seq (ndarray | list[float]): the sequence of angles
 
-    Raises:
-        RuntimeError: check origin sequence carefully when get this exception.
-        It raises when there are several transition over 360 degrees.
+#     Raises:
+#         RuntimeError: check origin sequence carefully when get this exception.
+#         It raises when there are several transition over 360 degrees.
 
-    Returns:
-        [ndarray]: Origin sequence if there no transition over 360 degrees
-        else recalculated sequence as in example.
-    """
-    if isinstance(seq, list):
-        seq = np.array(seq)
-    diff = np.absolute(seq[1:] - seq[:-1])  # differences of neighboring elements
-    indices = np.where(diff > 300)[0]
-    if len(indices) > 1:
-        raise RuntimeError('Unbelievable shit happened!')
-    if len(indices) == 0:
-        return seq
-    return np.append(seq[:indices[0] + 1], seq[indices[0] + 1:] + 360 * (-1 + 2 * (seq[1] > seq[0])))
+#     Returns:
+#         [ndarray]: Origin sequence if there no transition over 360 degrees
+#         else recalculated sequence as in example.
+#     """
+#     if isinstance(seq, list):
+#         seq = np.array(seq)
+#     diff = np.absolute(seq[1:] - seq[:-1])  # differences of neighboring elements
+#     indices = np.where(diff > 300)[0]
+#     if len(indices) > 1:
+#         raise RuntimeError('Unbelievable shit happened!')
+#     if len(indices) == 0:
+#         return seq
+#     return np.append(seq[:indices[0] + 1], seq[indices[0] + 1:] + 360 * (-1 + 2 * (seq[1] > seq[0])))
 
 
 

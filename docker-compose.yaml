@@ -20,15 +20,16 @@ services:
       - "/dev/ttyUSB2:/dev/ttyUSB2"
     volumes:
       - .:/ground_station
+    networks:
+      - gs_network
     # command: tail -F anything
-
-  redis:
-    image: 'redis:latest'
-    container_name: redis_container
-    ports:
-      - 6379:6379
-    environment:
-        - ALLOW_EMPTY_PASSWORD=yes
+  # redis:
+  #   image: 'redis:latest'
+  #   container_name: redis_container
+  #   ports:
+  #     - 6379:6379
+  #   environment:
+  #       - ALLOW_EMPTY_PASSWORD=yes
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -38,9 +39,12 @@ services:
         - 15672:15672
     volumes:
       - .:/ground_station
+    networks:
+      - gs_network
 
   mongodb:
     image: mongo:latest
+    container_name: mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
@@ -48,3 +52,9 @@ services:
       - 27017:27017
     volumes:
       - ./mongodb_data_container:/data/db
+    networks:
+      - gs_network
+
+networks:
+  gs_network:
+    external: true

@@ -2,18 +2,18 @@ from __future__ import annotations
 
 import os
 from datetime import date
-# from tempfile import NamedTemporaryFile
-from typing import Union
-from anyio import Any
+from tempfile import NamedTemporaryFile
+from typing import Any, Union
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, HTTPException  # , UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile  # , UploadFile, File
 from fastapi.responses import JSONResponse
-# from pylint.lint import Run
-# from pylint.reporters.text import TextReporter
-# from io import StringIO
-from ground_station.database_api import db_register_new_session, get_all_sessions
+from pylint.lint import Run
+from pylint.reporters.text import TextReporter
+from io import StringIO
+#from ground_station.database_api import db_add_user_script, db_register_new_session, get_all_sessions
 # from ground_station.hardware.naku_device_api import device
-from ground_station.models import RegisterSessionModel
+from ground_station.models import RegisterSessionModel, UserScriptModel
 from ground_station.propagator.celestrak_api import get_sat_name_and_num
 from ground_station.propagator.propagate import OBSERVERS, get_sessions_for_sat
 
@@ -44,44 +44,45 @@ async def satellites():
 
 @router.post("/register_new_session")
 async def register_new_session(request_body: RegisterSessionModel):
-    db_register_new_session(request_body.dict())
+    #db_register_new_session(request_body.dict())
     print(request_body)
     return 'OK'
 
 
-@router.get("/pending_sessions")
-async def get_pending_sessions():
-    sat_sessions = get_all_sessions()
-    print(sat_sessions)
-    return JSONResponse(content=sat_sessions)
+# @router.get("/pending_sessions")
+# async def get_pending_sessions():
+#     sat_sessions = get_all_sessions()
+#     print(sat_sessions)
+#     return JSONResponse(content=sat_sessions)
 
 
-# def pylint_check(path: str):
-#     pylint_output = StringIO()  # Custom open stream
-#     reporter = TextReporter(pylint_output)
-#     results = Run(['--disable=missing-module-docstring', f'{path}'],
-#                   reporter=reporter, exit=False)
-#     errors = results.linter.stats.error
-#     fatal = results.linter.stats.fatal
-#     return errors, fatal, pylint_output.getvalue()
+def pylint_check(path: str):
+    pylint_output = StringIO()  # Custom open stream
+    reporter = TextReporter(pylint_output)
+    results = Run(['--disable=missing-module-docstring', f'{path}'],
+                  reporter=reporter, exit=False)
+    errors: int = results.linter.stats.error
+    fatal: int = results.linter.stats.fatal
+    return errors, fatal, pylint_output.getvalue()
 
 
-# @router.post("/save_script")
-# async def create_upload_file(user_script: UploadFile):
-#     contents = await user_script.read()
-#
-#     file_copy = NamedTemporaryFile(delete=False)
-#     file_copy.write(contents)  # copy the received file data into a new temp file.
-#     file_copy.seek(0)  # move to the beginning of the file
-#
-#     errors, fatal, details = pylint_check(f'{file_copy.name}')
-#     if not errors:
-#         print('SCRIPT OK')
-#         # TODO: save script in db
-#     # os.remove(f'{prefix}_{user_script.filename}')
-#     file_copy.close()  # Remember to close any file instances before removing the temp file
-#     os.unlink(file_copy.name)  # unlink (remove) the file
-#     return {"result": details, "errors": errors, "fatal": fatal}
+@router.post("/save_script")
+async def create_upload_file(user_id: UUID, user_script: UploadFile, script_name: str, description: str = ''):
+    contents = await user_script.read()
+
+    file_copy = NamedTemporaryFile(delete=False)
+    file_copy.write(contents)  # copy the received file data into a new temp file.
+    file_copy.seek(0)  # move to the beginning of the file
+
+    errors, fatal, details = pylint_check(f'{file_copy.name}')
+    if not errors:
+        print('SCRIPT OK')
+        # TODO: save script in db
+    # os.remove(f'{prefix}_{user_script.filename}')
+    file_copy.close()  # Remember to close any file instances before removing the temp file
+    os.unlink(file_copy.name)  # unlink (remove) the file
+    #db_add_user_script(UserScriptModel(user_id=user_id, script_name=script_name, content=contents))
+    return {"result": details, "errors": errors, "fatal": fatal}
 
 
 # @router.post("/register_new_session")

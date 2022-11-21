@@ -274,18 +274,18 @@ class RotatorDriver:
 
 if __name__ == '__main__':
     import serial.tools.list_ports
-    print([(device_info.device, device_info.serial_number)
-          for device_info in serial.tools.list_ports.comports()])
-    # rotator = RotatorDriver()
-    # rotator.connect(rx_port='COM36', tx_port='COM42')
-    # # print(rotator.get_axis_parameters('1'))
-    # # time.sleep(2)
-    # rotator.print_flag = True
-    # time.sleep(1)
-    # rotator.set_angle(2, 2)
-    # try:
-    #     while True:
-    #         time.sleep(1)
-    #
-    # except KeyboardInterrupt:
-    #     print('Shutdown rotator driver')
+    # print([(device_info.device, device_info.serial_number)
+    #       for device_info in serial.tools.list_ports.comports()])
+    rotator = RotatorDriver()
+    rotator.connect(rx_port='COM36', tx_port='COM46')
+    # print(rotator.get_axis_parameters('1'))
+    # time.sleep(2)
+    rotator.print_flag = True
+    time.sleep(1)
+    rotator.set_angle(2, 2)
+    try:
+        while True:
+            time.sleep(1)
+
+    except KeyboardInterrupt:
+        print('Shutdown rotator driver')

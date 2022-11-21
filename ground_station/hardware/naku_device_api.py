@@ -2,7 +2,7 @@ from __future__ import annotations
 import time
 from datetime import datetime, timedelta
 from pytz import utc
-from ground_station.hardware.radio.lora_controller import LoRaController
+from ground_station.hardware.radio.radio_controller import RadioController
 from ground_station.hardware.rotator.rotator_driver import RotatorDriver
 from ground_station.hardware.serial_utils import convert_to_port
 from ground_station.propagator.propagate import SatellitePath
@@ -83,7 +83,7 @@ class NAKU(metaclass=Singleton):
         self.tle_list_struct: dict[str, datetime | list[str] | None] = {'last_update': None, 'tle_string_list': None}
 
         self.rotator: RotatorDriver = RotatorDriver()
-        self.radio: LoRaController = LoRaController()
+        self.radio: RadioController = RadioController()
 
         self.connection_status: bool = False
 

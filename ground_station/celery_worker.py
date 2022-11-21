@@ -11,12 +11,14 @@ if sys.platform.startswith('win'):
                                 # backend="redis://localhost:6379/0",
                                 # backend='mongodb://root:rootpassword@astrosync.ru:27017/?authMechanism=DEFAULT',
                                 backend='mongodb://root:rootpassword@localhost:27017/?authMechanism=DEFAULT',
+                                # backend = 'db+postgresql+psycopg2://testkeycloakuser:testkeycloakpassword@postgres/testkeycloakdb',
                                 include=['ground_station.celery_tasks'])
 else:  # docker
     celery_app = Celery('celery_worker', broker='amqp://guest:guest@rabbitmq:5672//',
                                 # backend="redis://redis:6379/0",
                                 # backend='mongodb://root:rootpassword@astrosync.ru:27017/?authMechanism=DEFAULT',
                                 backend='mongodb://root:rootpassword@mongodb:27017/?authMechanism=DEFAULT',
+                                # backend = 'db+postgresql+psycopg2://testkeycloakuser:testkeycloakpassword@postgres/testkeycloakdb',
                                 include=['ground_station.celery_tasks'])
 celery_app.config_from_object(celery_config)
 

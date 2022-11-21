@@ -13,3 +13,4 @@ mongodb_data_container
 poetry.lock
 __pycache__/
 __pycache__
+venv10

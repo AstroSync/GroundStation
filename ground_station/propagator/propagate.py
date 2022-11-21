@@ -5,7 +5,7 @@ import os
 import time
 from datetime import date, datetime
 from typing import Any, Optional, Literal
-from dateutil import parser
+# from dateutil import parser
 from pytz import utc
 from skyfield.api import load
 from skyfield.sgp4lib import EarthSatellite
@@ -229,5 +229,9 @@ if __name__ == '__main__':
     # print(points)
     # for alt, az, t_point in points:
     #     print(alt, az, t_point)
-    print(convert_degrees(np.array([*np.arange(350, 359), *np.arange(0, 9)])))
-    print(convert_degrees(np.array([*np.arange(9, 0, -1), *np.arange(359, 350, -1)])))
+
+    # print(convert_degrees(np.array([*np.arange(350, 359), *np.arange(0, 9)])))
+    # print(convert_degrees(np.array([*np.arange(9, 0, -1), *np.arange(359, 350, -1)])))
+
+    pass
+

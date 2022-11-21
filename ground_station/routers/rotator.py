@@ -36,7 +36,7 @@ async def set_speed(az_speed: float, el_speed: float):
 
 @router.get("/")
 async def get_position():
-    position = gs_device.rotator.current_position
+    position: tuple[float, float] = gs_device.rotator.current_position  # type: ignore
     print(position)
     return {"az": position[0], "el": position[1]}
 

@@ -1,22 +1,27 @@
 from __future__ import annotations
-import ast
-import asyncio
+# import ast
+# import asyncio
 import os
 import sys
 import uvicorn
-# import aiohttp
 from fastapi import FastAPI
+
 from fastapi.middleware.cors import CORSMiddleware
 from ground_station.hardware.naku_device_api import gs_device
 from ground_station.routers import basic, websocket_api, schedule, radio, rotator
+from ground_station.keycloak import idp
 
-try:
-    gs_device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "6")}',
-                rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BIA")}',
-                radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJA")}')
-except RuntimeError as err:
-    print(err)
-    sys.exit()
+
+# try:
+#     gs_device.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
+#                 rx_port_or_serial_id=f'/dev/ttyUSB0',
+#                 radio_port_or_serial_id=f'/dev/ttyUSB2')
+#     # gs_device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "6")}',
+#     #             rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BIA")}',
+#     #             radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJA")}')
+# except RuntimeError as err:
+#     print(err)
+#     sys.exit()
 
 gs_device.rotator.print_flag = True
 
@@ -26,14 +31,16 @@ app.include_router(radio.router)
 app.include_router(schedule.router)
 app.include_router(websocket_api.router)
 app.include_router(basic.router)
+
+idp.add_swagger_config(app)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://astrosync.ru", "http://localhost:80"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # async def request_sessions() -> str:
 #     """Request all pending sessions from the server .

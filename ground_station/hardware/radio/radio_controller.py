@@ -93,8 +93,23 @@ class RadioController(SX127x_Driver):
         # self.set_low_data_rate_optimize(True)
         if not self.__stop_rx_routine_flag:
             self.stop_rx_thread()
-        self.write_fifo(data)
-        self.interface.run_tx_then_rx_cont()
+        buffer_size = 255
+        timeout_counter_sec = 2
+        if len(data) > buffer_size:
+            chunks: list[list[int] | bytes] = [data[i:i + buffer_size] for i in range(0, len(data), buffer_size)]
+            print(f'big parcel: {len(data)=}')
+            for chunk in chunks:
+                self.write_fifo(chunk)
+                self.interface.run_tx_then_rx_cont()
+                time.sleep(1.5)
+                # while not self.get_tx_done_flag() and timeout_counter_sec > 0:
+                #     time.sleep(0.1)
+                #     timeout_counter_sec -= 0.1
+                #     print(self.get_())
+                #     self.reset_irq_flags()
+        else:
+            self.write_fifo(data)
+            self.interface.run_tx_then_rx_cont()
         if self.__stop_rx_routine_flag:
             self.start_rx_thread()
 
@@ -174,7 +189,7 @@ class RadioController(SX127x_Driver):
 
     def rx_routine(self) -> None:
         while not self.__stop_rx_routine_flag:
-            pkt: LoRaRxPacket | None = lora.check_rx_input()
+            pkt: LoRaRxPacket | None = self.check_rx_input()
             if pkt is not None:
                 if len(pkt.data) > 0:
                     print(pkt)

@@ -1,64 +1,98 @@
 from datetime import datetime, timedelta
-import uuid
-from ground_station.sessions_store.session import Session
-from pymongo import MongoClient
+from typing import Type
+# from zoneinfo import ZoneInfo
+# import uuid
+# from devtools import debug
+from pymongo import MongoClient, ASCENDING
 from pymongo.database import Database
 from pymongo.collection import Collection
-
+# from ground_station.models.db import TimeRangeModel
+from ground_station.sessions_store.session import Session
+from ground_station.sessions_store.terminal_time_range import TerminalTimeRange  #, TestModel, TimeRangeModel
+# from ground_station.sessions_store.session import Session
 from ground_station.sessions_store.time_range import TimeRange
-from ground_station.sessions_store.sessions_store import TimeRangesStore
+from ground_station.sessions_store.time_range_store import TimeRangesStore
 
 
-class MongoController(TimeRangesStore):
-    def __init__(self, host: str, username: str, password: str):
+class MongoStore(TimeRangesStore):
+    def __init__(self, host: str, username: str, password: str, collection_type: Type[TimeRange]) -> None:
         super().__init__()
         try:
             client: MongoClient = MongoClient(host=host, port=27017, username=username, uuidRepresentation='standard',
                                               password=password, authMechanism='DEFAULT',
                                               serverSelectionTimeoutMS=2000)
-            self.db: Database = client['TimeRanges']
+            db: Database = client['TimeRanges']
             print("Connected to MongoDB")
-            self.connection_status: bool = True
-            self.db_origin_ranges: Collection = self.db['origin_ranges']
-            self.db_prev_merge: Collection = self.db['prev_merge']
-            self.db_schedule: Collection = self.db['schedule']
+            self.collection_type: Type[TimeRange] = collection_type
+            self.db_origin_ranges: Collection = db['origin_ranges']
+            self.db_prev_merge: Collection = db['prev_merge']
+            self.db_schedule: Collection = db['schedule']
+
+            self.db_origin_ranges.create_index([( "finish", ASCENDING )], expireAfterSeconds=10)
+            self.db_prev_merge.create_index([( "finish", ASCENDING )], expireAfterSeconds=10)
+            self.db_schedule.create_index([( "finish", ASCENDING )], expireAfterSeconds=10)
+            self.db_origin_ranges.create_index([( "start", ASCENDING )])
+            self.db_prev_merge.create_index([( "start", ASCENDING )])
+            self.db_schedule.create_index([( "start", ASCENDING )])
         except TimeoutError as e:
             print(f'Database connection failed: {e}')
-        print(list(self.db_origin_ranges.find()))
-        self.origin_ranges = [TimeRange(task_id=el['_id'], start=el['start_time'], finish=el['finish_time'],
-                                        duration_sec=el['duration_sec'], timezone=el['timezone'],
-                                        priority=el['priority']) for el in list(self.db_origin_ranges.find())]
-        self.prev_merge = [TimeRange(task_id=el['_id'], start=el['start_time'], finish=el['finish_time'],
-                                     duration_sec=el['duration_sec'], timezone=el['timezone'],
-                                     priority=el['priority']) for el in list(self.db_prev_merge.find())]
-        self.schedule = [TimeRange(task_id=el['_id'], start=el['start_time'], finish=el['finish_time'],
-                                   duration_sec=el['duration_sec'], timezone=el['timezone'],
-                                   priority=el['priority']) for el in list(self.db_schedule.find())]
 
-    def append(self, *time_ranges: TimeRange):
+        self._init_store()
+
+    def _init_store(self) -> None:
+        """
+        Возможно тут стоит полностью очищать коллекции prev_merge & schedule, делать merge и
+        записывать результат в БД
+        """
+        # var = list(self.db_origin_ranges.find())
+        self.origin_ranges = [self.collection_type(**el) for el in self.get_schedule()]
+        self.prev_merge = [self.collection_type(**el) for el in list(self.db_prev_merge.find())]
+        self.schedule = [self.collection_type(**el) for el in list(self.db_schedule.find())]
+
+    def get_schedule(self) -> list[dict]:
+        return list(self.db_schedule.find({}, {'_id': False}))
+
+    def append(self, *time_ranges: TimeRange) -> None:
+        self._init_store()
         super().append(*time_ranges)
 
-        _ = [self.db_origin_ranges.replace_one({'_id': convert_timerange_to_dict(tr)['_id']},
-                                             convert_timerange_to_dict(tr), upsert=True) for tr in time_ranges]
-        self.db_prev_merge.delete_many({})
-        self.db_prev_merge.insert_many([tr for tr in self.prev_merge])
-        self.db_schedule.delete_many({})
-        self.db_schedule.insert_many([convert_timerange_to_dict(tr) for tr in self.schedule])
-
-    def remove(self, element: list[uuid.UUID]):
-        super().remove(element)
+        # _ = [self.db_origin_ranges.replace_one({'_id': tr.get_id()}, tr.dict(), upsert=True) for tr in time_ranges]
         self.db_origin_ranges.delete_many({})
-        self.db_origin_ranges.insert_many([convert_timerange_to_dict(tr) for tr in self.origin_ranges])
+        self.db_origin_ranges.insert_many([tr.dict() for tr in self.origin_ranges])
         self.db_prev_merge.delete_many({})
-        self.db_prev_merge.insert_many([convert_timerange_to_dict(tr) for tr in self.prev_merge])
+        self.db_prev_merge.insert_many([tr.dict() for tr in self.prev_merge])
         self.db_schedule.delete_many({})
-        self.db_schedule.insert_many([convert_timerange_to_dict(tr) for tr in self.schedule])
+        self.db_schedule.insert_many([tr.dict() for tr in self.schedule])
 
+    def remove(self, *element: TimeRange) -> None:
+        self._init_store()
+        super().remove(*element)
+        self.db_origin_ranges.delete_many({})
+        self.db_origin_ranges.insert_many([tr.dict() for tr in self.origin_ranges])
+        self.db_prev_merge.delete_many({})
+        self.db_prev_merge.insert_many([tr.dict() for tr in self.prev_merge])
+        self.db_schedule.delete_many({})
+        self.db_schedule.insert_many([tr.dict() for tr in self.schedule])
+
+# def to_model(tr: TimeRange) -> TimeRangeModel:
+#     model = TimeRangeModel(**tr.dict())
+#     return model
+
+# def from_model(tr: dict) -> TimeRange:
+#     tr['time_range_id'] = tr.pop('_id')
+#     return TimeRange(**tr)
 
 if __name__ == '__main__':
-    controller = MongoController('astrosync.ru', 'root', 'rootpassword')
-    start_time = datetime(2011, 12, 1, 1, 1, 1)
-    t_1: TimeRange = TimeRange(uuid.uuid4(), start_time + timedelta(seconds=5), duration_sec=20, priority=2, symbol='-')
-    t_2: TimeRange = TimeRange(uuid.uuid4(), start_time + timedelta(seconds=1), duration_sec=10, priority=3, symbol='=')
-    controller.append(t_1, t_2)
+    controller: MongoStore = MongoStore('10.6.1.74', 'root', 'rootpassword', Session)
+    # start_time: datetime = datetime.utcnow() + timedelta(seconds=60)
+    start_time: datetime = datetime.now().astimezone() + timedelta(seconds=60)
+    # start_time: datetime = datetime(2011, 12, 1, 1, 1, 1)
+    t_1: TerminalTimeRange = TerminalTimeRange(start_time + timedelta(seconds=5), duration_sec=20, priority=2)
+    t_2: TerminalTimeRange = TerminalTimeRange(start_time + timedelta(seconds=91), duration_sec=10, priority=3)
+    s1: Session = Session(username='lolkek', start=start_time, duration_sec=10, priority=1)
+    s2: Session = Session(username='gdfg', start=start_time + timedelta(seconds=2),  duration_sec=5, priority=2)
+    controller.append(s1, s2)
+    print(controller.get_schedule())
+    # controller.remove(t_2)
+    # controller.append(t_1, t_2)
 

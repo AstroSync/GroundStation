@@ -6,7 +6,9 @@ from uuid import UUID, uuid4
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.collection import Collection
-from ground_station.models import DbTaskModel, UserScriptModel
+
+from ground_station.models.db import UserScriptModel
+from ground_station.sessions_store.session import Session
 
 DB_CONNECTION_STATUS: bool = False
 
@@ -29,7 +31,7 @@ except TimeoutError as e:
 
 
 def db_update_user_script(model: UserScriptModel):
-    return user_scripts.replace_one({'_id': model._id}, model.__dict__, upsert=True).raw_result
+    return user_scripts.replace_one({'_id': model.script_id}, model.__dict__, upsert=True).raw_result
 
 
 def db_remove_user_script(script_id: UUID):
@@ -40,8 +42,8 @@ def db_remove_sessions(session_id: UUID):
     return sessions.delete_one({'_id': session_id}).raw_result
 
 
-def db_update_session(model: DbTaskModel):
-    return sessions.replace_one({'_id': model._id}, model.__dict__, upsert=True).raw_result
+def db_update_session(model: Session):
+    return sessions.replace_one({'_id': model.time_range_id}, model.__dict__, upsert=True).raw_result
 
 
 def get_all_sessions() -> list[Any]:

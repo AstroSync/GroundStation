@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Iterable
 import uuid
-from ground_station.sessions_store.time_range import merge, TimeRange, terminal_print
+from ground_station.sessions_store.terminal_time_range import TerminalTimeRange, terminal_print
+from ground_station.sessions_store.time_range import merge, TimeRange
 
 
 def analize_difference(prev_merge: list[TimeRange], schedule: list[TimeRange],
@@ -61,11 +62,14 @@ def analize_append(schedule: list[TimeRange], new_ranges: list[TimeRange]):
 def analize_remove(prev_merge: list[TimeRange], schedule: list[TimeRange], removed_ranges: list[TimeRange]):
     schedule_idlist: list[uuid.UUID] = [time_range.get_id() for time_range in schedule]
     prev_idlist: list[uuid.UUID] = [time_range.get_id() for time_range in prev_merge]
+    removed_counter = 0
     for removed_range in removed_ranges:
         # Элемент удаляется из raw_prev_merge и после слияния получаем current_merge но уже без этого элемента
         # Далее сравниваем два результата слияния с элементом и без него.
-        if not removed_range.get_id() in prev_idlist:
-            raise ValueError(f'TimeRange from removed_ranges list was never registered.\n{removed_range}')
+        if removed_range.get_id() in prev_idlist:
+            removed_counter += 1
+    print(f'Will be removed {removed_counter} ranges.')
+            # raise ValueError(f'TimeRange from removed_ranges list was never registered.\n{removed_range}')
     for prev_merged_element in prev_merge:
         if not prev_merged_element.get_id() in schedule_idlist:
             print(f'Prev_merge element was fully covered by new element. Deleted element:\n{prev_merged_element}')
@@ -91,9 +95,9 @@ class TimeRangesStore:
         self.origin_ranges: list[TimeRange] = []  # unmerged ranges
         self.prev_merge: list[TimeRange] = []
         self.schedule: list[TimeRange] = []  # calculated priority ranges
-
-    def set_timezone(self, tz):
-        raise NotImplementedError()
+        # self.fully_deleted: list[TimeRange] = []  # TimeRange -> UUID ?
+        # self.last_added: list[TimeRange] = []
+        # self.last_removed: list[TimeRange] = []
 
     def append(self, *time_ranges: TimeRange) -> None:
         self.origin_ranges.extend(time_ranges)
@@ -106,54 +110,40 @@ class TimeRangesStore:
             self.schedule[:] = merged_ranges[:]
         analize_difference(self.prev_merge, self.schedule, time_ranges)
 
-    def remove(self, element: uuid.UUID | list[uuid.UUID] | TimeRange | list[TimeRange]):
+    def remove(self, *element: TimeRange) -> None:
         if len(self.origin_ranges) == 0:
             raise ValueError('You can not remove element from empty list.')
-        match element:
-            case [uuid.UUID(), *_]:
-                for el in element:
-                    self.__remove_single(el)
-            case [TimeRange(), *_]:
-                for el in element:
-                    self.origin_ranges.remove(el)
-            case uuid.UUID():
-                self.__remove_single(element)
-            case TimeRange():
-                # May be need to catch exception
-                self.origin_ranges.remove(element)
-            case _:
-                raise TypeError('Incorrect variable type for TimeRangeStore operation.')
+        for el in element:
+            self.origin_ranges.remove(el)
         merged_ranges: list[TimeRange] = merge(self.origin_ranges)
         self.prev_merge[:] = self.schedule[:]
         self.schedule[:] = merged_ranges[:]
         analize_difference(self.prev_merge, self.schedule, None, element)  # type: ignore
 
-    def __remove_single(self, element: uuid.UUID) -> None:
-        origin_element: list[TimeRange] = get_time_range_by_id(self.origin_ranges, element)
-        if len(origin_element) == 1:
-            self.origin_ranges.remove(origin_element[0])
-        else:
-            raise ValueError(f'Origin ranges does not consist this element. id: {origin_element}')
+    # def __remove_single(self, element: uuid.UUID) -> None:
+    #     origin_element: list[TimeRange] = get_time_range_by_id(self.origin_ranges, element)
+    #     if len(origin_element) == 1:
+    #         self.origin_ranges.remove(origin_element[0])
+    #     else:
+    #         raise ValueError(f'Origin ranges does not consist this element. id: {origin_element}')
 
 
 
-TimeRanges_store = TimeRangesStore()
 
 if __name__ == '__main__':
+    TimeRanges_store = TimeRangesStore()
 
     start_time: datetime = datetime.now()
 
-    t_1: TimeRange = TimeRange(start=start_time + timedelta(seconds=5), duration_sec=20, priority=2)
-    t_2: TimeRange = TimeRange(start=start_time + timedelta(seconds=1), duration_sec=10, priority=3)
-    t_3: TimeRange = TimeRange(start=start_time + timedelta(seconds=1), duration_sec=30, priority=1)
-    t_4: TimeRange = TimeRange(start=start_time + timedelta(seconds=5), duration_sec=26, priority=2)
-    t_5: TimeRange = TimeRange(start=start_time + timedelta(seconds=45), duration_sec=5, priority=5)
-    t_8: TimeRange = TimeRange(start=start_time + timedelta(seconds=55), duration_sec=5, priority=5)
-    t_6: TimeRange = TimeRange(start=start_time + timedelta(seconds=12), duration_sec=5, priority=1)
-    t_7: TimeRange = TimeRange(start=start_time + timedelta(seconds=42), duration_sec=25, priority=1)
-    print(t_1.get_id())
-    print(t_2.get_id())
-    print(t_3.get_id())
+    t_1: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=5), duration_sec=20, priority=2)
+    t_2: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=1), duration_sec=10, priority=3)
+    t_3: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=1), duration_sec=30, priority=1)
+    t_4: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=5), duration_sec=26, priority=2)
+    t_5: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=45), duration_sec=5, priority=5)
+    t_6: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=12), duration_sec=5, priority=1)
+    t_7: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=42), duration_sec=25, priority=1)
+    t_8: TerminalTimeRange = TerminalTimeRange(start=start_time + timedelta(seconds=55), duration_sec=5, priority=5)
+
     TimeRanges_store.append(t_2, t_3)
     TimeRanges_store.append(t_1)
 
@@ -161,9 +151,10 @@ if __name__ == '__main__':
 
     TimeRanges_store.append(t_5, t_4, t_6, t_8)
 
-    # TimeRanges_store.remove([t_2, t_4, t_7])
-    terminal_print(TimeRanges_store.origin_ranges)
+    TimeRanges_store.remove(t_2, t_4, t_7)
+    terminal_print(TimeRanges_store.origin_ranges)  # type: ignore
     print('--------------------------------------------------------')
-    terminal_print(TimeRanges_store.schedule)
+    terminal_print(TimeRanges_store.schedule)  # type: ignore
     print('--------------------------------------------------------')
-    terminal_print(TimeRanges_store.prev_merge)
+    terminal_print(TimeRanges_store.prev_merge)  # type: ignore
+

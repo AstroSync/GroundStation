@@ -3,8 +3,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import TypeVar, Iterable, Any
 from uuid import UUID, uuid4
-from ground_station.models import DbTaskModel
-from ground_station.sessions_store.time_range_iterable import TimeRange, TimeRanges, EmptyRange
+from ground_station.sessions_store.__researching__.time_range_iterable import TimeRange, TimeRanges, EmptyRange
 
 Self = TypeVar("Self", bound="Task")
 
@@ -32,8 +31,8 @@ class Task:
     def __gt__(self, val: Self) -> bool:
         return self.priority > val.priority
 
-    def convert_to_db_model(self) -> DbTaskModel:
-        return DbTaskModel.parse_obj(self.__dict__)
+    # def convert_to_db_model(self) -> DbTaskModel:
+    #     return DbTaskModel.parse_obj(self.__dict__)
 
 def merge(ranges_list: list[Task]) -> list[Task]:
     """ Immutable function.

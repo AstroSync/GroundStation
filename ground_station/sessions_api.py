@@ -1,39 +1,32 @@
-from datetime import datetime
-from uuid import UUID
-from ground_station.models import DbTaskModel, RegisterSessionModel
-from ground_station.sessions_store.sessions_store import TimeRanges_store
+from __future__ import annotations
+from datetime import datetime, timedelta
+from uuid import UUID, uuid4
+from ground_station.celery_worker import celery_app
+from ground_station.celery_client import celery_register_session
+from ground_station.models.api import RegisterSessionModel
+from ground_station.sessions_store.session import Session
+from ground_station.sessions_store.mongodb_controller import MongoStore
 
-def register_sessions(new_sessions: RegisterSessionModel):
-    """
-    Данные приходят от фронта.
-    *подразумевается, что пользователь авторизирован, а скрипты проверены линтером и находятся в БД
-    1) сконвертировать RegisterSessionModel в лист DbTaskModel
-    2) обновить расписание, сделав merge сессий
-    3) зарегистрировать сессии в БД и отправить исполняться в celery
-    """
-    tasks: list[DbTaskModel] = [DbTaskModel(user_id=new_sessions.user_id,
-                                            username=new_sessions.username,
-                                            script_id=session.script_id,
-                                            priority=session.priority,
-                                            sat_name=new_sessions.sat_name,
-                                            registration_time=datetime.now(),
-                                            start_time=session.start_time,
-                                            duration_sec=session.available_sec,
-                                            station=session.station,
-                                            status='WAITING')
-                                for session in new_sessions.session_list]
-    TimeRanges_store.append()
+store = MongoStore('10.6.1.74', 'root', 'rootpassword', Session)
 
-def cancel_sessions(sessions_id_list: list[UUID]):
+def register_sessions(new_sessions: list[RegisterSessionModel]) -> None:
+    sessions: list[Session] = [Session(**session.dict()) for session in new_sessions]
+    store.append(*sessions)
+    _ = [celery_register_session(session) for session in sessions]
+
+def cancel_sessions(sessions_id_list: list[UUID]) -> None:
+    i = celery_app.control.inspect()
+    tasks: list[dict[str, list[dict]]] = i.scheduled()
+    # find id in tasks and mark as revoked
+
+
+def set_session_priority(priority: int) -> None:
     pass
 
-def set_session_priority(priority: int):
+def set_session_script(session_id: UUID, script_id: UUID | None):
     pass
 
-def set_session_script(script_id: UUID):
-    pass
-
-def remove_script(script_id: UUID):
+def remove_script(script_id: UUID) -> None:
     pass
 
 def get_user_scripts(user_id: UUID) -> list:
@@ -44,3 +37,14 @@ def get_user_sessions(user_id: UUID) -> list:
 
 def get_my_satellites(user_id: UUID) -> list:
     return []
+
+
+if __name__ == '__main__':
+    start_time = datetime.now().astimezone() + timedelta(seconds=60)
+    input_data: RegisterSessionModel = RegisterSessionModel(user_id=uuid4(),
+                                                            username='kek',
+                                                            sat_name='norbi',
+                                                            priority=1,
+                                                            start=start_time,
+                                                            duration_sec=300)
+    register_sessions([input_data])

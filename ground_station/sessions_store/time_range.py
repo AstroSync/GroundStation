@@ -1,11 +1,10 @@
 from __future__ import annotations
 from copy import deepcopy
 from datetime import datetime, timedelta
-import random
 from typing import Any, Iterable, Union
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
-
+from rich.pretty import pprint
 
 class EmptyRange:
     def __sub__(self, val: TimeRange | EmptyRange) -> TimeRange | EmptyRange:  # type: ignore
@@ -15,40 +14,44 @@ class EmptyRange:
     def __str__(self) -> str:
         return 'EmptyRange'
 
-symbol_list: list[str] = ['@', '#', '$', '%', '^', '&', '*', '-', '=', '~', 'o', '+', '0']
+class PrettyPrint:
+    def __str__(self) -> str:
+        lines: list[str] = [self.__class__.__name__ + ':']
+        for key, val in vars(self).items():
+            lines += f'{key}: {val}'.split('\n')
+        return '\n    '.join(lines)
 
-class TimeRange:
-    def __init__(self, start: datetime, finish: datetime | None = None, duration_sec: int = 0,
-                 priority: int = 1, _id: UUID | None = None, symbol: str | None = None) -> None:
-        self._id: UUID = uuid4() if _id is None else _id
-        self.priority: int = priority
+class Intersections(PrettyPrint):
+    def __init__(self, **kwargs) -> None:
+        self.piwlp: list[UUID] = kwargs.get('piwlp', [])  # partically intersections with lower priority
+        self.piwhp: list[UUID] = kwargs.get('piwhp', [])  # partically intersections with higher priority
+        self.fiwlp: list[UUID] = kwargs.get('fiwlp', [])  # fully intersections with lower priority
+        self.covered_by: UUID | None = kwargs.get('covered_by', None)
+
+class TimeRange(PrettyPrint):
+    def __init__(self, start: datetime, **kwargs) -> None:
+        self.time_range_id: UUID = kwargs.get('time_range_id', uuid4())
+        self.priority: int = kwargs.get('priority', 1)
         self.start: datetime = start
-        self.duration_sec: int = duration_sec
-        self.parts: int = 1
-        if finish is not None:
-            self.finish: datetime = finish
-            if duration_sec == 0:  # default value
-                self.duration_sec = (self.finish - self.start).seconds
-                if self.duration_sec == 0:
-                    raise ValueError('Use EmptyRange')
-            # if (self.finish - self.start).seconds != self.duration_sec:
-            #     raise ValueError(f'Duration has incompatible value. You can do ' \
-            #                       f'not use duration or finish time parameter')
-        else:
-            self.duration_sec: int = duration_sec
-            self.finish: datetime = self.start + timedelta(seconds=duration_sec)
-            if self.duration_sec == 0:
-                raise Warning('Use EmptyRange')
-        self.initial_start: datetime = start
-        self.initial_duration_sec: int = self.duration_sec
-        self.vip_list: list[UUID] = []
-        self.symbol: str = symbol if symbol is not None else random.choice(symbol_list)
-        validate_range(self)
+        self.duration_sec: int = kwargs.get('duration_sec', 0)
+        self.finish: datetime = kwargs.get('finish', self.start + timedelta(seconds=self.duration_sec))
+        if self.finish == self.start:
+            raise ValueError('Use EmptyRange')
+        if self.start > self.finish:
+            raise ValueError('Incorrect TimeRange format: start later then finish.')
+        self.duration_sec = (self.finish - self.start).seconds
+        self.parts: int = kwargs.get('parts', 1)
+        self.initial_start: datetime = kwargs.get('initial_start', start)
+        self.initial_duration_sec: int = kwargs.get('initial_duration_sec', self.duration_sec)
+        # self.piwlp: list[UUID] = kwargs.get('piwlp', [])  # partically intersections with lower priority
+        # self.piwhp: list[UUID] = kwargs.get('piwhp', [])  # partically intersections with higher priority
+        # self.fiwlp: list[UUID] = kwargs.get('fiwlp', [])  # fully intersections with lower priority
+        # self.covered_by: UUID | None = kwargs.get('covered_by', None)
 
     def __eq__(self, val: TimeRange | EmptyRange) -> bool:
         if isinstance(val, TimeRange):
-            return self._id == val._id and self.priority == val.priority and self.start == val.start and \
-                   self.finish == val.finish and self.duration_sec == val.duration_sec
+            return self.time_range_id == val.time_range_id and self.priority == val.priority and \
+                   self.start == val.start and self.finish == val.finish and self.duration_sec == val.duration_sec
         return False
 
     def __lt__(self, val: TimeRange) -> bool:
@@ -57,30 +60,16 @@ class TimeRange:
     def __gt__(self, val: TimeRange) -> bool:
         return self.priority > val.priority
 
-    def __contains__(self, val: datetime | TimeRange) -> bool:
+    def __contains__(self, val: TimeRange) -> bool:
         """
         self:      |--------------|
         val:           |======|
         (val in self) = True
         """
-        if isinstance(val, TimeRange):
-            return val.start >= self.start and val.finish <= self.finish
-        return self.start <= val <= self.finish
-
-    def __str__(self) -> str:
-        return f'id: {self._id}\nstart: {self.start}\nstop: {self.finish}\nparts: {self.parts}\n'\
-               f'duration: {self.duration_sec} sec\npriority: {self.priority}\n'
+        return val.start >= self.start and val.finish <= self.finish
 
     def get_id(self) -> UUID:
-        return self._id
-
-    @staticmethod
-    def run_callback(callback, args: list | None = None, kwargs: dict | None = None):
-        if args is None:
-            args = []
-        if kwargs is None:
-            kwargs = {}
-        return callback(*args, **kwargs)
+        return self.time_range_id
 
     def timedelta(self) -> timedelta:
         return self.finish - self.start
@@ -132,52 +121,22 @@ class TimeRange:
                 finish: datetime = intersection.start
             elif intersection.start == self.start and intersection.finish < self.finish:
                 start: datetime = intersection.finish
-            elif intersection.start == self.start and intersection.finish == self.finish:
-                # self in val
-                return EmptyRange()  # type: ignore
+            elif self in val:
+                return EmptyRange()
             elif val in self:
-
-                return (TimeRange(_id=self._id, start=self.start, finish=val.start, priority=self.priority, symbol=self.symbol),
-                        TimeRange(_id=self._id, start=val.finish, finish=self.finish, priority=self.priority, symbol=self.symbol))
+                return (self.__class__(finish=val.start, **dict({k: v for k, v in self.__dict__.items() if k != 'finish'})),
+                        self.__class__(start=val.finish, **dict({k: v for k, v in self.__dict__.items() if k != 'start'})))
         # partial or no intersection
-        return TimeRange(_id=self._id, start=start, finish=finish, priority=self.priority, symbol=self.symbol)
+        return self.__class__(start=start, finish=finish, **removekey(removekey(self.__dict__, 'start'), 'finish'))
 
-    def graphical_view(self) -> str:
-        space = ' '
-        return f'{space * ((self.start - datetime.now()).seconds)}|{self.symbol*(self.duration_sec - 1)}|'\
-               f' p={self.priority}'
+    def dict(self) -> dict:
+        return self.__dict__
 
 
-def terminal_print(tr_list: list[TimeRange]) -> None:
-    for tr in tr_list:
-        print(tr.graphical_view())
-
-
-class TimeRangeState:
-    def __init__(self, before_merge: TimeRange, after_merge: list[TimeRange]):
-        self._id: UUID = before_merge.get_id()
-        self.before_merge: TimeRange = before_merge  # state before merge
-        self.after_merge: list[TimeRange] = after_merge  # state after merge
-
-    def __str__(self) -> str:
-        return f'id: {self._id}\nbefore_merge: {self.before_merge}\n after_merge: {self.after_merge}\n'
-
-    # def __str__(self) -> str:
-    #     new_line = '\n'
-    #     return ''.join([f'\nid: {k}\n\n'\
-    #                     f'before_merge: {{\n{v.before_merge if not isinstance(v.before_merge, Iterable) else [str(x).split(new_line) for x in v.before_merge]}'\
-    #                     f'}}\nafter_merge: {{\n'\
-    #                     f'{v.after_merge if not isinstance(v.after_merge, Iterable) else [str(x).split(new_line) for x in v.after_merge]}'\
-    #                     f'}}\n\n'
-    #                     for k, v in self.items()])
-
-
-def validate_range(*args: TimeRange) -> None:
-    """Check intervals inside TimeRange are not inverted"""
-    for time_range in args:
-        if time_range.start > time_range.finish:
-            raise ValueError('TimeRange inversed!')
-
+def removekey(d, key):
+    r = dict(d)
+    del r[key]
+    return r
 
 def isintersection(t1: TimeRange | EmptyRange, t2: TimeRange | EmptyRange) -> bool:
     if isinstance(t1, EmptyRange) or isinstance(t2, EmptyRange):
@@ -218,6 +177,17 @@ def calc_intersect(t1: TimeRange | EmptyRange, t2: TimeRange | EmptyRange) -> Ti
     return EmptyRange()  # type: ignore
 
 
+# def get_intersections(tr_list: list[TimeRange], time_range: TimeRange) -> Intersections:
+#     intersections = Intersections()
+#     for tr in tr_list:
+#         relative_complement: RelativeComplement = tr.relative_complement(time_range)
+#         if isinstance(relative_complement, EmptyRange):
+#             intersections.covered_by = time_range.get_id()
+#             time_range.fiwlp.append(comparable_range.get_id())
+#         elif relative_complement != comparable_range:  # comparable_range was splitted or has an intersecion
+#             comparable_range.piwhp.append(time_range.get_id())
+#             time_range.piwlp.append(comparable_range.get_id())
+
 RelativeComplement = Union[TimeRange, tuple[TimeRange, TimeRange], EmptyRange]
 
 
@@ -244,7 +214,7 @@ def merge(ranges_list: list[TimeRange]) -> list[TimeRange]:
                 result_list.remove(comparable_range)
             elif relative_complement != comparable_range:  # comparable_range was splitted or has an intersecion
                 result_list[:] = list(replace(result_list, old_item=comparable_range, new_items=relative_complement))[:]
-    recalculate_parts(result_list)  # after splitting ranges need to recalculater their 'parts' parameter
+    recalculate_parts(result_list)  # after splitting ranges need to recalculate their 'parts' parameter
     return result_list  # sorted(result_list, key=lambda x: x.start, reverse=False)
 
 
@@ -269,5 +239,6 @@ if __name__ == '__main__':
     # print((zoneinfo.available_timezones()))
     start_time = datetime.now()
     t_1: TimeRange = TimeRange(start_time + timedelta(seconds=5), duration_sec=20, priority=2)
-    t_2: TimeRange = TimeRange(start_time + timedelta(seconds=1), duration_sec=10, priority=3)
-    print(t_1.__dict__)
+    t_2: TimeRange = TimeRange(start_time + timedelta(seconds=7), duration_sec=10, priority=3)
+    res = merge([t_1, t_2])
+    _ = [pprint(x.dict()) for x in res]

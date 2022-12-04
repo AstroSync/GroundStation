@@ -277,12 +277,16 @@ if __name__ == '__main__':
     # print([(device_info.device, device_info.serial_number)
     #       for device_info in serial.tools.list_ports.comports()])
     rotator = RotatorDriver()
-    rotator.connect(rx_port='COM36', tx_port='COM46')
+    rotator.connect(rx_port='/dev/ttyUSB0', tx_port='/dev/ttyUSB1')
     # print(rotator.get_axis_parameters('1'))
     # time.sleep(2)
     rotator.print_flag = True
-    time.sleep(1)
-    rotator.set_angle(2, 2)
+    # time.sleep(1)
+    # rotator.set_angle(2, 2)
+    rotator.get_position()
+    # rotator.set_calibration(0, 127)
+    # rotator.set_calibration(1, 90)
+    # rotator.get_position()
     try:
         while True:
             time.sleep(1)

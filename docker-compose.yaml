@@ -9,6 +9,7 @@ services:
       dockerfile: ground_station.dockerfile
     ports:
       - 80:80
+      - 8080:8080
       - 5555:5555
     #environment:
     #  RX_PORT: ${RX_PORT?Variable not set}
@@ -20,8 +21,8 @@ services:
       - "/dev/ttyUSB2:/dev/ttyUSB2"
     volumes:
       - .:/ground_station
-    networks:
-      - gs_network
+    #networks:
+    #  - gs_network
     # command: tail -F anything
   # redis:
   #   image: 'redis:latest'
@@ -39,11 +40,11 @@ services:
         - 15672:15672
     volumes:
       - .:/ground_station
-    networks:
-      - gs_network
+    #networks:
+    #  - gs_network
 
   mongodb:
-    image: mongo:latest
+    image: mongo:4.4
     container_name: mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -52,9 +53,9 @@ services:
       - 27017:27017
     volumes:
       - ./mongodb_data_container:/data/db
-    networks:
-      - gs_network
+    #networks:
+    #  - gs_network
 
-networks:
-  gs_network:
-    external: true
+#networks:
+  #gs_network:
+  #  external: true

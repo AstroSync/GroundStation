@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pytz import utc
 from ground_station.hardware.radio.radio_controller import RadioController
 from ground_station.hardware.rotator.rotator_driver import RotatorDriver
-from ground_station.hardware.serial_utils import convert_to_port
+from ground_station.hardware.serial_utils import convert_to_port, get_available_ports
 from ground_station.propagator.propagate import SatellitePath
 
 
@@ -95,13 +95,14 @@ class NAKU(metaclass=Singleton):
         return {'position': self.rotator.current_position}
 
     def connect(self, rx_port_or_serial_id: str, tx_port_or_serial_id: str, radio_port_or_serial_id: str) -> None:
-        ports: dict[str, str | None] = convert_to_port(rx_port=rx_port_or_serial_id, tx_port=tx_port_or_serial_id,
-                                radio_port=radio_port_or_serial_id)
-        if not all(ports.values()):
-            raise RuntimeError(f'Some ports are unavailable {ports}')
-        self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])    # type: ignore
-        self.radio.connect(port=ports['radio_port'])  # type: ignore
-        self.connection_status = True
+        if not self.connection_status:
+            ports: dict[str, str | None] = convert_to_port(rx_port=rx_port_or_serial_id, tx_port=tx_port_or_serial_id,
+                                    radio_port=radio_port_or_serial_id)
+            if not all(ports.values()):
+                raise RuntimeError(f'Some ports are unavailable {ports}. There are only next ports: {get_available_ports()}')
+            self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])    # type: ignore
+            self.radio.connect(port=ports['radio_port'])  # type: ignore
+            self.connection_status = True
 
 
     # def cancel_current_job(self):

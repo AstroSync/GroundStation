@@ -1,40 +1,42 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
-from ground_station.models import DbTaskModel
-from ground_station.sessions_store.time_range import TimeRange, terminal_print, merge
+# from devtools import debug
+from ground_station.sessions_store.terminal_time_range import terminal_print
+# from ground_station.db_models import DbTaskModel
+from ground_station.sessions_store.time_range import TimeRange, merge
 
 
 class Session(TimeRange):
-    def __init__(self, user_id: UUID, username: str, sat_name: str, station: str, start: datetime, duration_sec: int,
-                       status: str = 'WAITING', priority: int = 1, script_id: UUID | None = None,
-                       _id: UUID | None = None, finish: datetime | None = None, result: str = '',
-                       traceback: str = '', symbol: str | None = None) -> None:
-        super().__init__(_id=_id, start=start, finish=finish, duration_sec=duration_sec, priority=priority,
-                         symbol=symbol)
-        self.user_id: UUID = user_id
+    def __init__(self, username: str, start: datetime, **kwargs) -> None:
+        super().__init__(start=start, **kwargs)
+        self.user_id: UUID = kwargs.get('user_id', uuid4())
         self.username: str = username
-        self.script_id: UUID | None = script_id
-        self.sat_name: str = sat_name
-        self.station: str = station
-        self.status: str = status
-        self.registration_time: datetime = datetime.now()
-        self.result: str = result
-        self.traceback: str = traceback
+        self.script_id: UUID | None = kwargs.get('script_id', None)
+        self.sat_name: str = kwargs.get('sat_name', 'NORBI')
+        self.station: str = kwargs.get('station', 'NSU')
+        self.status: str = kwargs.get('status', 'WAITING')
+        self.registration_time: datetime = kwargs.get('registration_time', datetime.now())
+        self.result: str = kwargs.get('result', '')
+        self.traceback: str = kwargs.get('traceback', '')
 
-    def convert_to_db_model(self) -> DbTaskModel:
-        return DbTaskModel.parse_obj(self.__dict__)
+    def relative_complement(self, val):
+        if hasattr(val, 'station'):
+            if self.station == val.station:  # type: ignore
+                return super().relative_complement(val)
+        return self
+    # def convert_to_db_model(self) -> DbTaskModel:
+    #     return DbTaskModel.parse_obj(self.__dict__)
 
 
 if __name__ == '__main__':
     start_time: datetime = datetime.now() + timedelta(seconds=2)
-    s1: Session = Session(user_id=uuid4(), username='lolkek', station='NSU@2135dsf23',
-                          start=start_time, duration_sec=10, sat_name='NORBI', priority=1)
-    s2: Session = Session(user_id=uuid4(), username='gdfg',station='NSU@2135dsf23', sat_name='NORBI',
-                          start=start_time + timedelta(seconds=2),  duration_sec=5, priority=2)
+    s1: Session = Session(username='lolkek', start=start_time, duration_sec=10, priority=1)
+    s2: Session = Session(username='gdfg', start=start_time + timedelta(seconds=2),  duration_sec=5, priority=2)
     data: list[Session] = [s1, s2]
-    terminal_print(data)  # type: ignore
+    # terminal_print(data)  # type: ignore
     new_data: list[TimeRange] = merge(data) # type: ignore
     print('-----------------')
-    terminal_print(new_data)  # type: ignore
-    # print(s1.convert_to_db_model())
+    terminal_print(new_data)
+    # print(s2.convert_to_db_model())
+    # debug(s2.convert_to_db_model())

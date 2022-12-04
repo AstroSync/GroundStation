@@ -30,9 +30,12 @@ class RotatorAxisModel:
 
 
 class RotatorModel:
-    def __init__(self) -> None:
-        self.azimuth: RotatorAxisModel = RotatorAxisModel()
-        self.elevation: RotatorAxisModel = RotatorAxisModel()
+    def __init__(self, **kwargs) -> None:
+        self.azimuth: RotatorAxisModel = RotatorAxisModel(**kwargs)
+        self.elevation: RotatorAxisModel = RotatorAxisModel(**kwargs)
+
+    def dict(self):
+        return self.__dict__
 
     def __str__(self) -> str:
         return f'Azimuth:\n{self.azimuth}\n\nElevation:\n{self.elevation}\n'

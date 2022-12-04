@@ -45,7 +45,7 @@ def request_celestrak_sat_tle(sat_name: str) -> EarthSatellite | None:
     return cubesat
 
 
-def convert_time_args(t_1: date | str, t_2: Optional[date | str] = None) -> tuple[Time, Time]:  # type: ignore
+def convert_time_args(t_1: date | str, t_2: date | str | None = None) -> tuple[Time, Time]:
     """As the frontend pass time arguments in different format, they need to be convertet datetime and
     then to Timescale. This function is auxiliary function for get_sessions_for_sat().
 
@@ -59,20 +59,20 @@ def convert_time_args(t_1: date | str, t_2: Optional[date | str] = None) -> tupl
     """
     timescale: Timescale = load.timescale()
     if isinstance(t_1, str):
-        t_1: datetime = parser.parse(t_1)  # type: ignore
+        t_1 = date.fromisoformat(t_1)
     if isinstance(t_2, str):
-        t_2: datetime = parser.parse(t_2)  # type: ignore
+        t_2 = date.fromisoformat(t_2)
     if t_2 is None:
-        t_2: Time = timescale.from_datetime(datetime.combine(t_1, datetime.max.time(), tzinfo=utc))  # type: ignore
+        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.max.time(), tzinfo=utc))
     elif t_2 == t_1:
-        t_2: Time = timescale.from_datetime(datetime.combine(t_2, datetime.max.time(), tzinfo=utc))  # type: ignore
+        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.max.time(), tzinfo=utc))
     else:
-        t_2: Time = timescale.from_datetime(datetime.combine(t_2, datetime.min.time(), tzinfo=utc))  # type: ignore
-    t_1: Time = timescale.from_datetime(datetime.combine(t_1, datetime.now().time(), tzinfo=utc))  # type: ignore
-    return t_1, t_2
+        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.min.time(), tzinfo=utc))
+    t_1_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.now().time(), tzinfo=utc))
+    return t_1_ts, t_2_ts
 
 
-def skip_events_until_start(event_type_list: list[int], event_time_list: list[Time]) -> tuple[list[int], list[Time]]:  # type: ignore
+def skip_events_until_start(event_type_list: list[int], event_time_list: list[Time]) -> tuple[list[int], list[Time]]:
     """Some times propagation may start at moment, when the satellite already at observation point.
     We will skip this session and wait next.
 
@@ -85,8 +85,8 @@ def skip_events_until_start(event_type_list: list[int], event_time_list: list[Ti
         tuple[list[int], list[Time]]: Event list without already running session.
     """
     while event_type_list[0] != 0:
-        event_type_list: list[int] = event_type_list[1:]
-        event_time_list: list[Time] = event_time_list[1:]
+        event_type_list = event_type_list[1:]
+        event_time_list = event_time_list[1:]
         if len(event_type_list) == 0:
             break
     return event_type_list, event_time_list

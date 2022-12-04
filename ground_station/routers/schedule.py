@@ -1,6 +1,8 @@
 from fastapi import APIRouter
-from ground_station.database_api import sessions, user_scripts
-from ground_station.models import RegisterSessionModel
+
+from ground_station.models.api import RegisterSessionModel
+
+# from ground_station.db_models import RegisterSessionModel
 
 
 router = APIRouter(prefix="/schedule", tags=["Schedule"])

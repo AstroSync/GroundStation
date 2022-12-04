@@ -1,7 +1,6 @@
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from devtools import debug
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class Foo:

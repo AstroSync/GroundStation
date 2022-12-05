@@ -16,13 +16,13 @@ def encoder(obj) -> str | dict:
     return obj.__dict__
 
 def decoder(obj):
-    if isinstance(obj, dict):
-        if 'azimuth' in obj:
-            return RotatorModel(**obj)
+    # if isinstance(obj, dict):
+    #     if 'azimuth' in obj:
+    #         return RotatorModel(**obj)
     return obj
 
 def my_dumps(obj):
-    return json.dumps(obj, default=encoder)
+    return json.loads(json.dumps(obj, default=encoder))
 
 def my_loads(obj) -> dict:
     return json.loads(str(obj).replace('\'', '\"'), object_hook=decoder)

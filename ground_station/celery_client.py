@@ -26,7 +26,7 @@ def get_position():
     return celery_app.send_task('ground_station.celery_tasks.get_angle',
                                 kwargs={'var1':1, 'var2': 2},
                                 soft_time_limit=5,
-                                eta=datetime.now().astimezone() + timedelta(seconds=60))
+                                eta=datetime.now().astimezone() + timedelta(seconds=6))
 
 def shutdown_worker():
     celery_app.control.broadcast('shutdown', destination=['NSU'])

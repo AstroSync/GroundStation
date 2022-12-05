@@ -6,7 +6,6 @@ from celery import Celery
 from kombu import serialization
 # from ground_station import celery_tasks
 from ground_station import celery_config
-from ground_station.hardware.rotator.rotator_models import RotatorModel
 
 
 def encoder(obj) -> str | dict:

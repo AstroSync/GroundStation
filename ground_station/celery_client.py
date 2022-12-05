@@ -2,9 +2,7 @@
 from datetime import datetime, timedelta
 from celery import group
 from ground_station.celery_worker import celery_app
-from ground_station.models.db import Model
 from ground_station.sessions_store.session import Session
-# from ground_station.celery_tasks import infinite_task
 
 
 def celery_register_session(model: Session):
@@ -15,7 +13,7 @@ def celery_register_session(model: Session):
                                        eta=model.start,
                                        soft_time_limit=soft_time_limit,
                                        time_limit=time_limit),
-                 celery_app.send_task('ground_station.celery_tasks.rotator_task',
+                 celery_app.send_task('ground_station.celery_tasks.rotator_task_emulation',
                                        kwargs={"data": model},
                                        eta=model.start,
                                        soft_time_limit=soft_time_limit,

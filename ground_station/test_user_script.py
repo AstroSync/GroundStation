@@ -1,5 +1,7 @@
 import time
-
-for i in range(10):
-    print(f'tick {i}')
+i = 0
+result = ''
+while True:
+    print(f'tick {i:+=1}')
     time.sleep(1)
+    result = result.join(str(i))

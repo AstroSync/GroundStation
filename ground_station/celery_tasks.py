@@ -1,3 +1,4 @@
+from __future__ import annotations
 from datetime import timedelta
 import os
 import time
@@ -6,10 +7,10 @@ from celery.signals import task_prerun, task_postrun
 from ground_station.celery_worker import celery_app
 from ground_station.hardware.naku_device_api import gs_device, session_routine
 # from ground_station.hardware.rotator.rotator_models import RotatorModel
-from ground_station.models.db import Model
+from ground_station.models.db import Model, UserScriptModel
 
 from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time
-from ground_station.database_api import user_scripts
+from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
 
 
@@ -33,17 +34,34 @@ def get_angle(self, **kwargs) -> dict:
 
 
 @celery_app.task(bind=True)
-def radio_task(model: Session):
-    result = None
+def radio_task(model: Session) -> str | None:
+    script: UserScriptModel | None = None
+    result: str | None = None
     try:
-        script_file = list(user_scripts.find({'script_id': model.script_id}))
-        if len(script_file) > 0:
-            loc = {}
-            exec(script_file[0], globals(), loc)
-            result = loc['script_result']
+        if model.script_id is not None:
+            script = script_store.download_script(model.script_id)
+            if script is not None:
+                if len(script.content) > 0:
+                    loc = {}
+                    exec(script.content, globals(), loc)
+                    result = loc['result']
     except SoftTimeLimitExceeded as exc:
         print(exc)
+    print(f'RADIO RESULT: {result}')
     return result
+
+
+@celery_app.task(bind=True)
+def rotator_task_emulation(model: Session) -> None:
+    try:
+        path_points: SatellitePath = angle_points_for_linspace_time(model.sat_name, model.station, model.start,
+                                                                    model.start + timedelta(model.duration_sec))
+        while i := 0 < model.duration_sec:
+            time.sleep(1)
+            i += 1
+            print(f'az: {path_points.azimuth[i]}')
+    except SoftTimeLimitExceeded as exc:
+        print(exc)
 
 
 @celery_app.task(bind=True)

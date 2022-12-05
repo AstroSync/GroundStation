@@ -26,6 +26,25 @@ class UserScriptModel(BaseModel):
     size: int
     sha256: str
 
+class SessionModel(BaseModel):
+    user_id: UUID
+    username: str
+    script_id: UUID | None
+    sat_name: str
+    station: str
+    status: str
+    registration_time: datetime
+    result: str
+    traceback: str
+    time_range_id: UUID
+    priority: int
+    start: datetime
+    duration_sec: int
+    finish: datetime
+    parts: int
+    initial_start: datetime
+    initial_duration_sec: int
+
 
 # class DbTaskModel(BaseModel):
 #     _id: UUID

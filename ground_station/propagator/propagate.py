@@ -18,7 +18,7 @@ from skyfield.toposlib import GeographicPosition
 import numpy as np
 
 
-OBSERVERS: dict[str, GeographicPosition] = {'Новосибирск': wgs84.latlon(54.842625, 83.095025, 170),
+OBSERVERS: dict[str, GeographicPosition] = {'NSU': wgs84.latlon(54.842625, 83.095025, 170),
              'Красноярск': wgs84.latlon(56.010041, 92.852069),
              'Москва': wgs84.latlon(55.4507, 37.3656)}
 

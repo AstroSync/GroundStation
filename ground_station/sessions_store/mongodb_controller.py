@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Type
 # from zoneinfo import ZoneInfo
@@ -20,7 +21,7 @@ class MongoStore(TimeRangesStore):
         try:
             client: MongoClient = MongoClient(host=host, port=27017, username=username, uuidRepresentation='standard',
                                               password=password, authMechanism='DEFAULT',
-                                              serverSelectionTimeoutMS=2000)
+                                              serverSelectionTimeoutMS=2000, tz_aware=True)
             db: Database = client['TimeRanges']
             print("Connected to MongoDB")
             self.collection_type: Type[TimeRange] = collection_type
@@ -45,9 +46,22 @@ class MongoStore(TimeRangesStore):
         записывать результат в БД
         """
         # var = list(self.db_origin_ranges.find())
-        self.origin_ranges = [self.collection_type(**el) for el in self.get_schedule()]
-        self.prev_merge = [self.collection_type(**el) for el in list(self.db_prev_merge.find())]
-        self.schedule = [self.collection_type(**el) for el in list(self.db_schedule.find())]
+        self.origin_ranges = []
+        self.prev_merge = []
+        self.schedule = []
+
+        for el in list(self.db_origin_ranges.find()):
+            val = self.collection_type(**el)
+            self.origin_ranges.append(val)
+        for el in list(self.db_prev_merge.find()):
+            val = self.collection_type(**el)
+            self.prev_merge.append(val)
+        for el in list(self.db_schedule.find()):
+            val = self.collection_type(**el)
+            self.schedule.append(val)
+        # self.origin_ranges = [self.collection_type(**el) for el in list(self.db_origin_ranges.find())]
+        # self.prev_merge = [self.collection_type(**el) for el in list(self.db_prev_merge.find())]
+        # self.schedule = [self.collection_type(**el) for el in list(self.db_schedule.find())]
 
     def get_schedule(self) -> list[dict]:
         return list(self.db_schedule.find({}, {'_id': False}))
@@ -58,7 +72,7 @@ class MongoStore(TimeRangesStore):
 
         # _ = [self.db_origin_ranges.replace_one({'_id': tr.get_id()}, tr.dict(), upsert=True) for tr in time_ranges]
         self.db_origin_ranges.delete_many({})
-        self.db_origin_ranges.insert_many([tr.dict() for tr in self.origin_ranges])
+        self.db_origin_ranges.insert_many([deepcopy(tr.dict()) for tr in self.origin_ranges])
         self.db_prev_merge.delete_many({})
         self.db_prev_merge.insert_many([tr.dict() for tr in self.prev_merge])
         self.db_schedule.delete_many({})

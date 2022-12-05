@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
+from zoneinfo import ZoneInfo
 # from devtools import debug
 from ground_station.sessions_store.terminal_time_range import terminal_print
 # from ground_station.db_models import DbTaskModel
@@ -16,7 +17,7 @@ class Session(TimeRange):
         self.sat_name: str = kwargs.get('sat_name', 'NORBI')
         self.station: str = kwargs.get('station', 'NSU')
         self.status: str = kwargs.get('status', 'WAITING')
-        self.registration_time: datetime = kwargs.get('registration_time', datetime.now())
+        self.registration_time: datetime = kwargs.get('registration_time', datetime.utcnow()).astimezone(tz=ZoneInfo('UTC'))
         self.result: str = kwargs.get('result', '')
         self.traceback: str = kwargs.get('traceback', '')
 

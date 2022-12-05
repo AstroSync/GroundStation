@@ -27,7 +27,7 @@ class MyModel(BaseModel):
 class MyClass:
     a: int = 1
     b: int = 2
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         self.c = 0
 print(bar.to_model())
 
@@ -50,3 +50,4 @@ sample_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 chunk_size=10
 result=[sample_list[i:i + chunk_size] for i in range(0, len(sample_list), chunk_size)]
 print(result)
+print(MyClass(**{'h':1}).__dict__)

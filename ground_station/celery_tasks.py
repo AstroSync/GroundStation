@@ -34,7 +34,7 @@ def get_angle(self, **kwargs) -> dict:
 
 
 @celery_app.task(bind=True)
-def radio_task(model: Session) -> str | None:
+def radio_task(self, model: Session) -> str | None:
     script: UserScriptModel | None = None
     result: str | None = None
     try:
@@ -52,7 +52,7 @@ def radio_task(model: Session) -> str | None:
 
 
 @celery_app.task(bind=True)
-def rotator_task_emulation(model: Session) -> None:
+def rotator_task_emulation(self, model: Session) -> None:
     try:
         path_points: SatellitePath = angle_points_for_linspace_time(model.sat_name, model.station, model.start,
                                                                     model.start + timedelta(model.duration_sec))

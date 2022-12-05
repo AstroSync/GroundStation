@@ -9,12 +9,12 @@ def celery_register_session(model: Session):
     soft_time_limit = model.duration_sec + 3
     time_limit = soft_time_limit + 8
     return group(celery_app.send_task('ground_station.celery_tasks.radio_task',
-                                       kwargs={"data": model},
+                                       kwargs=model.__dict__,
                                        eta=model.start,
                                        soft_time_limit=soft_time_limit,
                                        time_limit=time_limit),
                  celery_app.send_task('ground_station.celery_tasks.rotator_task_emulation',
-                                       kwargs={"data": model},
+                                       kwargs=model.__dict__,
                                        eta=model.start,
                                        soft_time_limit=soft_time_limit,
                                        time_limit=time_limit))()

@@ -25,6 +25,7 @@ class RegisterSessionModel(BaseModel):
     """
     user_id: UUID
     username: str
+    script_id: UUID
     sat_name: str
     priority: int
     start: datetime

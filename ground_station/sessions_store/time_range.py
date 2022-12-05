@@ -5,7 +5,6 @@ from typing import Any, Iterable, Union
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 from rich.pretty import pprint
-
 class EmptyRange:
     def __sub__(self, val: TimeRange | EmptyRange) -> TimeRange | EmptyRange:  # type: ignore
         if isinstance(val, EmptyRange):
@@ -32,16 +31,16 @@ class TimeRange(PrettyPrint):
     def __init__(self, start: datetime, **kwargs) -> None:
         self.time_range_id: UUID = kwargs.get('time_range_id', uuid4())
         self.priority: int = kwargs.get('priority', 1)
-        self.start: datetime = start
+        self.start: datetime = start.astimezone(tz=ZoneInfo('UTC'))
         self.duration_sec: int = kwargs.get('duration_sec', 0)
-        self.finish: datetime = kwargs.get('finish', self.start + timedelta(seconds=self.duration_sec))
+        self.finish: datetime = kwargs.get('finish', self.start + timedelta(seconds=self.duration_sec)).astimezone(tz=ZoneInfo('UTC'))
         if self.finish == self.start:
             raise ValueError('Use EmptyRange')
         if self.start > self.finish:
             raise ValueError('Incorrect TimeRange format: start later then finish.')
         self.duration_sec = (self.finish - self.start).seconds
         self.parts: int = kwargs.get('parts', 1)
-        self.initial_start: datetime = kwargs.get('initial_start', start)
+        self.initial_start: datetime = kwargs.get('initial_start', start).astimezone(tz=ZoneInfo('UTC'))
         self.initial_duration_sec: int = kwargs.get('initial_duration_sec', self.duration_sec)
         # self.piwlp: list[UUID] = kwargs.get('piwlp', [])  # partically intersections with lower priority
         # self.piwhp: list[UUID] = kwargs.get('piwhp', [])  # partically intersections with higher priority

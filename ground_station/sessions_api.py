@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime, timedelta
-from uuid import UUID, uuid4
+from uuid import UUID  #, uuid4
 from ground_station.celery_worker import celery_app
 from ground_station.celery_client import celery_register_session
 from ground_station.models.api import RegisterSessionModel
@@ -9,10 +9,11 @@ from ground_station.sessions_store.mongodb_controller import MongoStore
 
 store = MongoStore('10.6.1.74', 'root', 'rootpassword', Session)
 
-def register_sessions(new_sessions: list[RegisterSessionModel]) -> None:
+def register_sessions(new_sessions: list[RegisterSessionModel]):
     sessions: list[Session] = [Session(**session.dict()) for session in new_sessions]
     store.append(*sessions)
-    _ = [celery_register_session(session) for session in sessions]
+    async_result = [celery_register_session(session) for session in sessions]
+    return async_result
 
 def cancel_sessions(sessions_id_list: list[UUID]) -> None:
     i = celery_app.control.inspect()
@@ -40,11 +41,12 @@ def get_my_satellites(user_id: UUID) -> list:
 
 
 if __name__ == '__main__':
-    start_time = datetime.now().astimezone() + timedelta(seconds=60)
-    input_data: RegisterSessionModel = RegisterSessionModel(user_id=uuid4(),
+    start_time = datetime.now() + timedelta(seconds=60)
+    input_data: RegisterSessionModel = RegisterSessionModel(user_id=UUID('388c01db-52a2-4192-9d6e-131958ea9e3a'),
+                                                            script_id=UUID('cc4804a2-e38f-47a1-9e6c-7fe8d9c6e4c3'),
                                                             username='kek',
                                                             sat_name='norbi',
                                                             priority=1,
                                                             start=start_time,
-                                                            duration_sec=300)
-    register_sessions([input_data])
+                                                            duration_sec=15)
+    print(register_sessions([input_data]))

@@ -7,7 +7,7 @@ from celery.signals import task_prerun, task_postrun
 from ground_station.celery_worker import celery_app
 from ground_station.hardware.naku_device_api import gs_device, session_routine
 # from ground_station.hardware.rotator.rotator_models import RotatorModel
-from ground_station.models.db import Model, UserScriptModel
+from ground_station.models.db import Model, UserScriptModel, SessionModel
 
 from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time
 from ground_station.sessions_store.scripts_store import script_store
@@ -36,12 +36,13 @@ def get_angle(self, **kwargs) -> dict:
 
 
 @celery_app.task(bind=True)
-def radio_task(self, model: Session) -> str | None:
+def radio_task(self, **kwargs) -> str | None:
+    session = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
     result: str | None = None
     try:
-        if model.script_id is not None:
-            script = script_store.download_script(model.script_id)
+        if session.script_id is not None:
+            script = script_store.download_script(session.script_id)
             if script is not None:
                 if len(script.content) > 0:
                     loc = {}
@@ -54,11 +55,12 @@ def radio_task(self, model: Session) -> str | None:
 
 
 @celery_app.task(bind=True)
-def rotator_task_emulation(self, model: Session) -> None:
+def rotator_task_emulation(self, **kwargs) -> None:
+    session = SessionModel.parse_obj(kwargs)
     try:
-        path_points: SatellitePath = angle_points_for_linspace_time(model.sat_name, model.station, model.start,
-                                                                    model.start + timedelta(model.duration_sec))
-        while i := 0 < model.duration_sec:
+        path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
+                                                                    session.finish)
+        while i := 0 < kwargs['duration_sec']:
             time.sleep(1)
             i += 1
             print(f'az: {path_points.azimuth[i]}')

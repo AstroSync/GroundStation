@@ -7,10 +7,10 @@ mongodb_backend_settings = {
 }
 # task_serializer = 'pickle'
 # result_serializer = 'pickle'
-accept_content = ['application/x-json', 'application/json']
+accept_content = ['application/json']
 task_serializer = 'json'
 # accept_content = ['json']
-result_serializer = 'custom_json'
+result_serializer = 'json'
 task_track_started = True
 result_extended = True
 timezone = 'Asia/Novosibirsk'

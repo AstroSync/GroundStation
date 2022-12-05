@@ -9,6 +9,16 @@ from ground_station.sessions_store.time_range import TimeRange, merge
 
 
 class Session(TimeRange):
+    user_id: UUID
+    username: str
+    script_id: UUID | None
+    sat_name: str
+    station: str
+    status: str
+    registration_time: datetime
+    result: str
+    traceback: str
+
     def __init__(self, username: str, start: datetime, **kwargs) -> None:
         super().__init__(start=start, **kwargs)
         self.user_id: UUID = kwargs.get('user_id', uuid4())

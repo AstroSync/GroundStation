@@ -28,13 +28,13 @@ def my_loads(obj) -> dict:
 
 print('Created celery app')
 
-serialization.register(
-    'custom_json',
-    my_dumps,
-    my_loads,
-    content_type='application/x-json',
-    content_encoding='utf-8',
-)
+# serialization.register(
+#     'custom_json',
+#     my_dumps,
+#     my_loads,
+#     content_type='application/x-json',
+#     content_encoding='utf-8',
+# )
 host = '10.6.1.74' # 'localhost'
 if sys.platform.startswith('win'):
     celery_app: Celery = Celery('ground_station', broker=f'amqp://guest:guest@{host}:5672//',

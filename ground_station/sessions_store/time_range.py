@@ -28,6 +28,15 @@ class Intersections(PrettyPrint):
         self.covered_by: UUID | None = kwargs.get('covered_by', None)
 
 class TimeRange(PrettyPrint):
+    time_range_id: UUID
+    priority: int
+    start: datetime
+    duration_sec: int
+    finish: datetime
+    parts: int
+    initial_start: datetime
+    initial_duration_sec: int
+
     def __init__(self, start: datetime, **kwargs) -> None:
         self.time_range_id: UUID = kwargs.get('time_range_id', uuid4())
         self.priority: int = kwargs.get('priority', 1)

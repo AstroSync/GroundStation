@@ -1,23 +1,28 @@
 # from datetime import datetime
 from datetime import datetime, timedelta
-from celery import group
+from celery import group, signature
 from ground_station.celery_worker import celery_app
 from ground_station.sessions_store.session import Session
+# from ground_station.celery_tasks import radio_task, rotator_task_emulation
 
 
 def celery_register_session(model: Session):
-    soft_time_limit = model.duration_sec + 3
-    time_limit = soft_time_limit + 8
-    return group(celery_app.send_task('ground_station.celery_tasks.radio_task',
-                                       kwargs=model.__dict__,
-                                       eta=model.start,
-                                       soft_time_limit=soft_time_limit,
-                                       time_limit=time_limit),
-                 celery_app.send_task('ground_station.celery_tasks.rotator_task_emulation',
-                                       kwargs=model.__dict__,
-                                       eta=model.start,
-                                       soft_time_limit=soft_time_limit,
-                                       time_limit=time_limit))()
+    soft_time_limit: float = model.duration_sec + 3.0
+    time_limit: float = soft_time_limit + 8.0
+
+    radio = signature('ground_station.celery_tasks.radio_task', args=(),
+                                                   kwargs=model.__dict__,
+                                                   eta=model.start,
+                                                   soft_time_limit=soft_time_limit,
+                                                   time_limit=time_limit)
+    rotator = signature('ground_station.celery_tasks.rotator_task_emulation', args=(),
+                                                   kwargs=model.__dict__,
+                                                   eta=model.start,
+                                                   soft_time_limit=soft_time_limit,
+                                                   time_limit=time_limit)
+
+    group_task: group = group(radio, rotator)
+    return group_task.apply_async()
 
 def connect():
     return celery_app.send_task('ground_station.celery_tasks.connect')

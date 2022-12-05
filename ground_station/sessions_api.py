@@ -12,7 +12,7 @@ store = MongoStore('10.6.1.74', 'root', 'rootpassword', Session)
 def register_sessions(new_sessions: list[RegisterSessionModel]):
     sessions: list[Session] = [Session(**session.dict()) for session in new_sessions]
     store.append(*sessions)
-    async_result = [celery_register_session(session) for session in sessions]
+    async_result = celery_register_session(sessions[0])
     return async_result
 
 def cancel_sessions(sessions_id_list: list[UUID]) -> None:
@@ -41,12 +41,12 @@ def get_my_satellites(user_id: UUID) -> list:
 
 
 if __name__ == '__main__':
-    start_time = datetime.now() + timedelta(seconds=60)
+    start_time = datetime.now() + timedelta(seconds=6)
     input_data: RegisterSessionModel = RegisterSessionModel(user_id=UUID('388c01db-52a2-4192-9d6e-131958ea9e3a'),
                                                             script_id=UUID('cc4804a2-e38f-47a1-9e6c-7fe8d9c6e4c3'),
                                                             username='kek',
-                                                            sat_name='norbi',
+                                                            sat_name='NORBI',
                                                             priority=1,
                                                             start=start_time,
                                                             duration_sec=15)
-    print(register_sessions([input_data]))
+    print(register_sessions([input_data])[0].get())

@@ -22,16 +22,16 @@ def connect() -> None:
 
 @celery_app.task
 def set_angle(az, el) -> None:
-    try:
-        gs_device.rotator.set_angle(az, el)
-    except SoftTimeLimitExceeded as exc:
-        print(exc)
+    gs_device.rotator.set_angle(az, el)
 
 @celery_app.task(bind=True)
 def get_angle(self, **kwargs) -> dict:
     # model = device.rotator.rotator_model.__dict__
-    print(self.request.retries)
-    time.sleep(10)
+    try:
+        print(self.request.retries)
+        time.sleep(10)
+    except SoftTimeLimitExceeded as exc:
+        print(exc)
     return Model().dict()
 
 

@@ -12,4 +12,5 @@ task_serializer = 'json'
 # accept_content = ['json']
 result_serializer = 'custom_json'
 task_track_started = True
+result_extended = True
 timezone = 'Asia/Novosibirsk'

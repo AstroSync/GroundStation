@@ -7,7 +7,7 @@ mongodb_backend_settings = {
 }
 # task_serializer = 'pickle'
 # result_serializer = 'pickle'
-accept_content = ['application/json']
+accept_content = ['application/json', 'application/x-json']
 task_serializer = 'json'
 # accept_content = ['json']
 result_serializer = 'json'

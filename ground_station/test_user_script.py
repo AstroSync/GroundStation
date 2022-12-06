@@ -1,7 +1,12 @@
 import time
 i = 0
-result = ''
+result = []
 while True:
-    print(f'tick {i:+=1}')
+    print(f'tick {i}')
     time.sleep(1)
-    result = result.join(str(i))
+    result.append(str(i))
+    i+=1
+
+
+# if __name__ == '__main__':
+#     print(result)

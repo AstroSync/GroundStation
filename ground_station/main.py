@@ -9,8 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from ground_station.hardware.naku_device_api import gs_device
 from ground_station.routers import basic, websocket_api, schedule, radio, rotator
-from ground_station.keycloak import idp
-
+# from ground_station.keycloak import idp
 
 # try:
 #     gs_device.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
@@ -32,7 +31,7 @@ app.include_router(schedule.router)
 app.include_router(websocket_api.router)
 app.include_router(basic.router)
 
-idp.add_swagger_config(app)
+# idp.add_swagger_config(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,7 +40,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # async def request_sessions() -> str:
 #     """Request all pending sessions from the server .
 

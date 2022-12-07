@@ -4,9 +4,9 @@ import os
 import time
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_prerun, task_postrun
+from websocket import create_connection
 from ground_station.celery_worker import celery_app
 from ground_station.hardware.naku_device_api import gs_device, session_routine
-# from ground_station.hardware.rotator.rotator_models import RotatorModel
 from ground_station.models.db import Model, UserScriptModel, SessionModel
 
 from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time
@@ -41,7 +41,9 @@ def radio_task(self, **kwargs) -> str | None:
     script: UserScriptModel | None = None
     result: str | None = None
     loc = {}
+    ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
     try:
+        ws.send('start script')
         if session.script_id is not None:
             script = script_store.download_script(session.script_id)
             if script is not None:
@@ -52,6 +54,8 @@ def radio_task(self, **kwargs) -> str | None:
         print(exc)
         print(f'{loc=}')
         print(f'{globals()=}')
+    ws.send('time is over')
+    ws.close()
     result = loc['result']
     print(f'RADIO RESULT: {result}')
     return result

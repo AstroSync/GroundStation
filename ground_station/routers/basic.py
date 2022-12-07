@@ -7,9 +7,9 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Union
 from io import BytesIO, StringIO
 from uuid import UUID  #, uuid4
-from fastapi import APIRouter, Depends, HTTPException, UploadFile  # , UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile  #, Depends , UploadFile, File
 from fastapi.responses import JSONResponse, StreamingResponse  #, RedirectResponse,
-from fastapi_keycloak import OIDCUser  #, UsernamePassword
+# from fastapi_keycloak import OIDCUser  #, UsernamePassword
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 from ground_station.models.api import RegisterSessionModel
@@ -19,15 +19,15 @@ from ground_station.models.db import UserScriptModel
 from ground_station.propagator.celestrak_api import get_sat_name_and_num
 from ground_station.propagator.propagate import OBSERVERS, get_sessions_for_sat
 from ground_station.sessions_store.scripts_store import script_store
-from ground_station.keycloak import idp
+# from ground_station.keycloak import idp
 
 router = APIRouter(tags=["Main"])
 sat_names = get_sat_name_and_num(os.path.join(os.path.dirname(__file__), "../propagator/active.json"))
 
 
-@router.get("/user")
-async def root_user(user: OIDCUser = Depends(idp.get_current_user())):
-    return {"message": user.dict()}
+# @router.get("/user")
+# async def root_user(user: OIDCUser = Depends(idp.get_current_user())):
+#     return {"message": user.dict()}
 
 
 @router.get("/app")

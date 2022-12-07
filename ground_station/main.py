@@ -1,8 +1,8 @@
 from __future__ import annotations
 # import ast
 # import asyncio
-import os
-import sys
+# import os
+# import sys
 import uvicorn
 from fastapi import FastAPI
 
@@ -49,7 +49,7 @@ app.add_middleware(
 #         str: [description]
 #     """
 #     async with aiohttp.ClientSession() as session:
-#         async with session.get('https://api.astrosync.ru/pending_sessions') as resp:  # FIXME: use .env
+#         async with session.get('https://api.astrosync.ru/pending_sessions') as resp:
 #             result: str = await resp.text()
 #     return result
 

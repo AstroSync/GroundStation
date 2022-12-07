@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 import sys
 from celery import Celery
-from kombu import serialization
+# from kombu import serialization
 # from ground_station import celery_tasks
 from ground_station import celery_config
 

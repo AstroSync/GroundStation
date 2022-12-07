@@ -40,16 +40,19 @@ def radio_task(self, **kwargs) -> str | None:
     session = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
     result: str | None = None
+    loc = {}
     try:
         if session.script_id is not None:
             script = script_store.download_script(session.script_id)
             if script is not None:
+                print(script.content)
                 if len(script.content) > 0:
-                    loc = {}
                     exec(script.content, globals(), loc)
-                    result = loc['result']
     except SoftTimeLimitExceeded as exc:
         print(exc)
+        print(f'{loc=}')
+        print(f'{globals()=}')
+    result = loc['result']
     print(f'RADIO RESULT: {result}')
     return result
 

@@ -177,6 +177,17 @@ class SatellitePath:
             return var
         raise StopIteration
 
+test_size = 45
+test_sat_path = {
+    'altitude': np.linspace(0.0, test_size, num=test_size),
+    'azimuth': np.linspace(90.0, 90 + test_size, num=test_size),
+    'dist': np.zeros(test_size),
+    'alt_rate': np.ones(test_size),
+    'az_rate': np.ones(test_size),
+    'dist_rate': np.zeros(test_size),
+    't_points': [datetime.now() + timedelta(seconds=x) for x in range(test_size)],
+    'az_rotation_direction': 1
+}
 
 # def convert_degrees(seq):
 #     """Recalculate angle sequence when it transits over 360 degrees.
@@ -225,7 +236,7 @@ if __name__ == '__main__':
     # # sessions = get_sessions_for_sat('NORBI', '19.06.2022', '19.06.2022')
     # # print('response:', sessions, len(sessions))
     # # print(request_celestrak_sat_tle('NORBI'))
-    start_time_: datetime = datetime(2022, 4, 15, 19, 5, 0, tzinfo=utc)
+    start_time_: datetime = datetime.now(tz=utc)
     points: SatellitePath = angle_points_for_linspace_time('NORBI', 'NSU', start_time_, start_time_ + timedelta(seconds=4), local_tle=False)
     print(points)
     for alt, az, t_point in points:
@@ -234,6 +245,6 @@ if __name__ == '__main__':
     # print(convert_degrees(np.array([*np.arange(350, 359), *np.arange(0, 9)])))
     # print(convert_degrees(np.array([*np.arange(9, 0, -1), *np.arange(359, 350, -1)])))
 
-    print(request_celestrak_sat_tle('NORBI'))
-    print(get_sessions_for_sat('NORBI', OBSERVERS, datetime.today()))
+    # print(request_celestrak_sat_tle('NORBI'))
+    # print(get_sessions_for_sat('NORBI', OBSERVERS, datetime.today()))
 

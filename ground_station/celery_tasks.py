@@ -6,14 +6,14 @@ from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_prerun, task_postrun
 from ground_station.celery_worker import celery_app
 from ground_station.hardware.naku_device_api import NAKU, session_routine
-from ground_station.models.db import Model, UserScriptModel, SessionModel
+from ground_station.models.db import UserScriptModel, SessionModel
 
-from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time
+from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time, test_sat_path
 from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
 from ground_station.web_secket_client import WebSocketClient
 
-gs_device = NAKU()
+gs_device: NAKU = NAKU()
 
 @celery_app.task
 def connect() -> None:
@@ -25,8 +25,8 @@ def connect() -> None:
 def set_angle(az, el) -> None:
     gs_device.rotator.set_angle(az, el)
 
-@celery_app.task(bind=True)
-def get_angle(self):
+@celery_app.task
+def get_angle():
     # model = device.rotator.rotator_model.__dict__
     return gs_device.rotator.get_position()
 
@@ -63,10 +63,7 @@ def rotator_task_emulation(self, **kwargs) -> None:
     try:
         path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
                                                                     session.finish)
-        while i := 0 < kwargs['duration_sec']:
-            time.sleep(1)
-            i += 1
-            print(f'az: {path_points.azimuth[i]}')
+        session_routine(test_sat_path)  # type: ignore
     except SoftTimeLimitExceeded as exc:
         print(exc)
 

@@ -41,22 +41,25 @@ class RotatorDriver:
         self.tx_thread_sleep_time: float = 0.1
 
     def connect(self, rx_port: str, tx_port: str) -> None:
-        self.reciever = try_to_connect(rx_port, 115200)
-        self.transmitter = try_to_connect(tx_port, 115200)
-        if self.reciever is not None and self.transmitter is not None:
-            try:
-                rotator_version = self.get_version()
-                print(f'Rotator version: {rotator_version}')
-            except Exception as err:
-                raise RuntimeError(f'Tx line has issue: {err}') from err
-            if not self.reciever.is_open or not self.transmitter.is_open:
-                raise RuntimeError(f'Tx or Rx line is not open')
-            self.connection_flag = True
-            self.rx_thread.start()
-            self.tx_thread.start()
-            self.queue_request_condition()
+        if not self.connection_flag:
+            self.reciever = try_to_connect(rx_port, 115200)
+            self.transmitter = try_to_connect(tx_port, 115200)
+            if self.reciever is not None and self.transmitter is not None:
+                try:
+                    rotator_version: str = self.get_version()
+                    print(f'Rotator version: {rotator_version}')
+                except Exception as err:
+                    raise RuntimeError(f'Tx line has issue: {err}') from err
+                if not self.reciever.is_open or not self.transmitter.is_open:
+                    raise RuntimeError(f'Tx or Rx line is not open')
+                self.connection_flag = True
+                self.rx_thread.start()
+                self.tx_thread.start()
+                self.queue_request_condition()
+            else:
+                print('Rotator does not connected')
         else:
-            print('Rotator does not connected')
+            print('rotator already connected')
 
     def __repr__(self) -> str:
         return f'{self.rotator_model.__repr__}'

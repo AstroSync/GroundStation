@@ -185,9 +185,23 @@ class TestSatellitePath:
     alt_rate = np.ones(test_size)
     az_rate = np.ones(test_size)
     dist_rate = np.zeros(test_size)
-    t_points = [datetime.now() + timedelta(seconds=x) for x in range(test_size)]
+    t_points = [datetime.now(tz=utc) + timedelta(seconds=x) for x in range(test_size)]
     az_rotation_direction = 1
+    __index: int = 0
+    def __getitem__(self, key) -> tuple[float, float, datetime]:
+        return (self.altitude.__getitem__(key), self.azimuth.__getitem__(key),
+               self.t_points.__getitem__(key))
 
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> tuple[float, float, datetime]:
+        if self.__index < len(self.altitude):
+            var: tuple[float, float, datetime] = (self.altitude[self.__index], self.azimuth[self.__index],
+                    self.t_points[self.__index])
+            self.__index += 1
+            return var
+        raise StopIteration
 
 # def convert_degrees(seq):
 #     """Recalculate angle sequence when it transits over 360 degrees.

@@ -1,8 +1,10 @@
 from __future__ import annotations
 from fastapi import APIRouter, WebSocketDisconnect
+from websocket import WebSocket as WsClient
 from starlette.websockets import WebSocket
 
 router: APIRouter = APIRouter(prefix="/websocket_api", tags=["WebSocket"])
+ws = WsClient()
 
 class ConnectionManager:
     def __init__(self) -> None:

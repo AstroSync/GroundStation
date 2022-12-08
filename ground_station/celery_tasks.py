@@ -40,7 +40,7 @@ def radio_task(self, **kwargs) -> str | None:
     session = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
     result: str | None = None
-    loc = {}
+    loc = {'result': result}
     ws = create_connection("ws://10.6.1.74:8080/websocket_api/ws/NSU_GS/123")
     try:
         ws.send('start script')
@@ -56,7 +56,7 @@ def radio_task(self, **kwargs) -> str | None:
         print(f'{globals()=}')
     ws.send('time is over')
     ws.close()
-    result = loc['result']
+    result = loc.get('result', None)
     print(f'RADIO RESULT: {result}')
     return result
 

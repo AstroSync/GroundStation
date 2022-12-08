@@ -1,6 +1,6 @@
 from __future__ import annotations
 from fastapi import APIRouter
-from ground_station.hardware.naku_device_api import gs_device
+from ground_station.hardware.naku_device_api import NAKU
 from ground_station.models.db import LoRaConfig, FSK_Config
 
 router = APIRouter(prefix="/radio", tags=["Radio"])
@@ -14,7 +14,7 @@ async def radio_config(config: LoRaConfig | FSK_Config):
 
 @router.post("/send_msg")
 async def send_msg(msg: list[int] | bytes):
-    gs_device.radio.send_single(msg)
+    NAKU().radio.send_single(msg)
     return {"message": "OK"}
 
 

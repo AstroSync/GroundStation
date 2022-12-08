@@ -1,8 +1,8 @@
 import time
-from ground_station.hardware.naku_device_api import gs_device
+from ground_station.hardware.naku_device_api import NAKU
 from ground_station.web_secket_client import WebSocketClient
 
-radio = gs_device.radio
+radio = NAKU().radio
 ws_client = WebSocketClient()
 radio.onReceive(ws_client.send)
 radio.onTrancieve(ws_client.send)

@@ -4,7 +4,6 @@ import time
 from typing import Callable
 from dataclasses import dataclass
 from ast import literal_eval
-from typing import Optional
 from ground_station.hardware.radio.sx127x_driver import SX127x_Driver
 
 
@@ -166,7 +165,7 @@ class RadioController(SX127x_Driver):
         snr, rssi = self.interface.read_several(self.reg.REG_PKT_SNR_VALUE, 2)
         return snr // 4, rssi - (164 if self.freq < 0x779E6 else 157)
 
-    def rx_done_isr(self) -> Optional[LoRaRxPacket]:
+    def rx_done_isr(self) -> LoRaRxPacket | None:
         start_time: float = time.perf_counter()
         while True:
             current_time: float = time.perf_counter()
@@ -179,7 +178,7 @@ class RadioController(SX127x_Driver):
                     return pkt
             time.sleep(0.2)
 
-    def check_rx_input(self) -> Optional[LoRaRxPacket]:
+    def check_rx_input(self) -> LoRaRxPacket | None:
         rx_flag: int = self.get_rx_done_flag()
         if rx_flag:  # TODO: check this method works is correct
             current_address: int = self.interface.read(self.reg.REG_FIFO_RX_CURRENT_ADDR)

@@ -1,27 +1,53 @@
-from threading import Thread
-import time
+# from threading import Thread
+# import time
 from websocket import create_connection
-ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
 
-def send_data() -> None:
-    try:
-        while True:
-            time.sleep(0.1)
-            data = input('>')
-            ws.send(data)
-    except (KeyboardInterrupt, EOFError):
-        return
 
-thread: Thread = Thread(target=send_data, daemon=True)
-thread.start()
 
-try:
-    while True:
-        result =  ws.recv()
-        print(f"Received: {result}")
-except KeyboardInterrupt:
-    print('\nShutdown client')
-    ws.close()
+class Singleton(type):
+    _instances: dict = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class WebSocketClient(metaclass=Singleton):
+    def __init__(self) -> None:
+        print('create ws client')
+        self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
+
+    def send(self, payload):
+        if not self.ws.connected:
+            print('create ws client')
+            self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
+        self.ws.send(payload)
+
+    def close(self):
+        return self.ws.close()
+
+
+
+# def send_data() -> None:
+#     try:
+#         while True:
+#             time.sleep(0.1)
+#             data = input('>')
+#             ws.send(data)
+#     except (KeyboardInterrupt, EOFError):
+#         return
+
+# thread: Thread = Thread(target=send_data, daemon=True)
+# thread.start()
+
+# try:
+#     while True:
+#         result =  ws.recv()
+#         print(f"Received: {result}")
+# except KeyboardInterrupt:
+#     print('\nShutdown client')
+#     ws.close()
 # import websocket
 # import _thread
 # import time

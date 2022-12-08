@@ -12,6 +12,7 @@ from ground_station.models.db import Model, UserScriptModel, SessionModel
 from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time
 from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
+from ground_station.web_secket_client import WebSocketClient
 
 
 @celery_app.task
@@ -40,7 +41,7 @@ def radio_task(self, **kwargs) -> str | None:
     session = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
     loc = {}
-    ws = create_connection("ws://10.6.1.74:8080/websocket_api/ws/NSU_GS/123")
+    ws_client = WebSocketClient()
     try:
         if session.script_id is not None:
             script = script_store.download_script(session.script_id)
@@ -48,12 +49,14 @@ def radio_task(self, **kwargs) -> str | None:
                 print(script.content)
                 if len(script.content) > 0:
                     exec(script.content, globals(), loc)
+            else:
+                ws_client.send('there is no script')
         else:
-            ws.send('there is no script')
+            ws_client.send('start without script')
     except SoftTimeLimitExceeded as exc:
         print(exc)
-    ws.send('time is over')
-    ws.close()
+    ws_client.send('time is over')
+    ws_client.close()
     result = loc.get('result', None)
     print(f'RADIO RESULT: {result}')
     return result

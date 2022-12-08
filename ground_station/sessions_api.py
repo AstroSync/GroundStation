@@ -43,7 +43,7 @@ def get_my_satellites(user_id: UUID) -> list:
 if __name__ == '__main__':
     start_time = datetime.now() + timedelta(seconds=6)
     input_data: RegisterSessionModel = RegisterSessionModel(user_id=UUID('388c01db-52a2-4192-9d6e-131958ea9e3a'),
-                                                            script_id=UUID('d6d83416-9588-40e8-bad8-f225128a16f7'),
+                                                            script_id=UUID('7812e6a2-c9d7-49f5-8388-9e7164a7c834'),
                                                             username='kek',
                                                             sat_name='NORBI',
                                                             priority=1,

@@ -1,40 +1,16 @@
 from __future__ import annotations
-from datetime import datetime
-import json
 import sys
 from celery import Celery
-# from kombu import serialization
-# from ground_station import celery_tasks
 from ground_station import celery_config
+from ground_station.hardware.naku_device_api import gs_device
 
-
-def encoder(obj) -> str | dict:
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    print(type(obj), obj)
-    return obj.__dict__
-
-def decoder(obj):
-    # if isinstance(obj, dict):
-    #     if 'azimuth' in obj:
-    #         return RotatorModel(**obj)
-    return obj
-
-def my_dumps(obj):
-    return json.loads(json.dumps(obj, default=encoder))
-
-def my_loads(obj) -> dict:
-    return json.loads(str(obj).replace('\'', '\"'), object_hook=decoder)
+gs_device.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
+                  rx_port_or_serial_id=f'/dev/ttyUSB0',
+                  radio_port_or_serial_id=f'/dev/ttyUSB2')
 
 print('Created celery app')
 
-# serialization.register(
-#     'custom_json',
-#     my_dumps,
-#     my_loads,
-#     content_type='application/x-json',
-#     content_encoding='utf-8',
-# )
+
 host = '10.6.1.74' # 'localhost'
 if sys.platform.startswith('win'):
     celery_app: Celery = Celery('ground_station', broker=f'amqp://guest:guest@{host}:5672//',

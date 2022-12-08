@@ -41,7 +41,7 @@ def radio_task(self, **kwargs) -> str | None:
     script: UserScriptModel | None = None
     result: str | None = None
     loc = {}
-    ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
+    ws = create_connection("ws://10.6.1.74:8080/websocket_api/ws/NSU_GS/123")
     try:
         ws.send('start script')
         if session.script_id is not None:

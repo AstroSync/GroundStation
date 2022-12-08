@@ -45,6 +45,7 @@ class RadioController(SX127x_Driver):
         self.__rx_thread = threading.Thread(name='rx_thread', target=self.rx_routine, daemon=True)
         self.__rx_callback: Callable | None = None
         self.__tx_callback: Callable | None = None
+        self.__rx_buffer: list = []
 
     def __init(self) -> None:
         self.interface.reset()
@@ -74,7 +75,7 @@ class RadioController(SX127x_Driver):
         if self.__rx_thread is not self.__rx_thread.is_alive():
             print('Start Rx thread')
             self.__stop_rx_routine_flag = False
-            self.__rx_thread = threading.Thread(name='rx_thread', target=self.rx_routine, daemon=True)
+            self.__rx_thread = threading.Thread(name='radio_rx_thread', target=self.rx_routine, daemon=True)
             self.__rx_thread.start()
 
     def stop_rx_thread(self) -> None:
@@ -207,7 +208,7 @@ class RadioController(SX127x_Driver):
                     print(pkt)
                     if self.__rx_callback is not None:
                         self.__rx_callback(f'rx < {pkt.data}')
-            time.sleep(1)
+            time.sleep(0.5)
 
     def user_cli(self) -> None:
         try:

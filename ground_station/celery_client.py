@@ -1,7 +1,5 @@
 # from datetime import datetime
-from datetime import datetime, timedelta
 from celery import group, signature
-from ground_station.celery_worker import celery_app
 from ground_station.sessions_store.session import Session
 # from ground_station.celery_tasks import radio_task, rotator_task_emulation
 
@@ -25,17 +23,19 @@ def celery_register_session(model: Session):
     return group_task.apply_async()
 
 def connect():
-    return celery_app.send_task('ground_station.celery_tasks.connect')
+    connect_task = signature('ground_station.celery_tasks.connect')
+    if connect_task is not None:
+        return connect_task.delay()
 
 def get_position():
-    return celery_app.send_task('ground_station.celery_tasks.get_angle',
-                                kwargs={'var1':1, 'var2': 2},
-                                soft_time_limit=5,
-                                eta=datetime.now().astimezone() + timedelta(seconds=6))
+    get_position_task = signature('ground_station.celery_tasks.get_angle')
+    if get_position_task is not None:
+        return get_position_task.delay()
 
-def shutdown_worker():
-    celery_app.control.broadcast('shutdown', destination=['NSU'])
-
+def set_position(az: float, el: float):
+    set_pos_task = signature('ground_station.celery_tasks.set_angle', args=(az, el))
+    if set_pos_task is not None:
+        return set_pos_task.delay()
 
 
 if __name__ == '__main__':
@@ -45,6 +45,7 @@ if __name__ == '__main__':
     # print(connect())
     # print(Model.parse_obj(get_position().get()))
     get_position()
+    # set_position(60, 0)
     # print(celery_app.control.purge())
     # print(celery_app.control.broadcast('purge', destination=['NSU']))
     # while True:

@@ -4,11 +4,11 @@ import uvicorn
 from fastapi import FastAPI
 
 from fastapi.middleware.cors import CORSMiddleware
-from ground_station.routers import basic, websocket_api, schedule  #, radio, rotator
+from ground_station.routers import basic, websocket_api, schedule, radio, rotator
 
 app: FastAPI = FastAPI(title="Ground station API")
-# app.include_router(rotator.router)
-# app.include_router(radio.router)
+app.include_router(rotator.router)
+app.include_router(radio.router)
 app.include_router(schedule.router)
 app.include_router(websocket_api.router)
 app.include_router(basic.router)

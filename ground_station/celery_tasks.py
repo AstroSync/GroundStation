@@ -26,14 +26,9 @@ def set_angle(az, el) -> None:
     gs_device.rotator.set_angle(az, el)
 
 @celery_app.task(bind=True)
-def get_angle(self, **kwargs) -> dict:
+def get_angle(self):
     # model = device.rotator.rotator_model.__dict__
-    try:
-        print(self.request.retries)
-        time.sleep(10)
-    except SoftTimeLimitExceeded as exc:
-        print(exc)
-    return Model().dict()
+    return gs_device.rotator.get_position()
 
 
 @celery_app.task(bind=True)

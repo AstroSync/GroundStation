@@ -1,5 +1,4 @@
-from typing import Optional
-
+from __future__ import annotations
 import serial
 from serial import SerialBase
 
@@ -61,7 +60,7 @@ class SerialInterface:
 
     def __try_read(self, amount: int = 1) -> bytes:
         try:
-            data: Optional[bytes]= self.__interface.read(amount)
+            data: bytes | None= self.__interface.read(amount)
             if data is None:
                 raise RuntimeError('Radio somehow read None data')
             return data

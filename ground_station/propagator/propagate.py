@@ -113,7 +113,7 @@ def map_events(event_type_list: list[int], event_time_list: list[Time], location
 def events_for_observers(satellite: EarthSatellite, observers: dict, ts_1: Time, ts_2: Time):
     events_list_for_all_observers: dict[str, list[dict[str, datetime | int | str]]] = {}
     for location_name, observer in observers.items():
-        event_time_list, event_type_list = satellite.find_events(observer, ts_1, ts_2, altitude_degrees=9)
+        event_time_list, event_type_list = satellite.find_events(observer, ts_1, ts_2, altitude_degrees=3)
         if len(event_type_list) > 1:  # there is at least one available session
             event_type_list, event_time_list = skip_events_until_start(event_type_list, event_time_list)
             if len(event_type_list) == 0:
@@ -235,5 +235,5 @@ if __name__ == '__main__':
     # print(convert_degrees(np.array([*np.arange(9, 0, -1), *np.arange(359, 350, -1)])))
 
     print(request_celestrak_sat_tle('NORBI'))
-    print(get_sessions_for_sat('NORBI', OBSERVERS, datetime.today(), datetime.today() + timedelta(hours=48)))
+    print(get_sessions_for_sat('NORBI', OBSERVERS, datetime.today()))
 

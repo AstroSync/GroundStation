@@ -4,9 +4,8 @@ import os
 import time
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_prerun, task_postrun
-from websocket import create_connection
 from ground_station.celery_worker import celery_app
-from ground_station.hardware.naku_device_api import gs_device, session_routine
+from ground_station.hardware.naku_device_api import NAKU, session_routine
 from ground_station.models.db import Model, UserScriptModel, SessionModel
 
 from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time
@@ -14,6 +13,7 @@ from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
 from ground_station.web_secket_client import WebSocketClient
 
+gs_device = NAKU()
 
 @celery_app.task
 def connect() -> None:

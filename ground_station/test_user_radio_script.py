@@ -2,10 +2,6 @@ import time
 from ground_station.hardware.naku_device_api import gs_device
 from ground_station.web_secket_client import WebSocketClient
 
-gs_device.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
-                  rx_port_or_serial_id=f'/dev/ttyUSB0',
-                  radio_port_or_serial_id=f'/dev/ttyUSB2')
-
 radio = gs_device.radio
 ws_client = WebSocketClient()
 radio.onReceive(ws_client.send)

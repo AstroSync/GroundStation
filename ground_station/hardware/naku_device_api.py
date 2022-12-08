@@ -87,6 +87,9 @@ class NAKU(metaclass=Singleton):
 
         self.connection_status: bool = False
 
+        self.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
+                     rx_port_or_serial_id=f'/dev/ttyUSB0',
+                     radio_port_or_serial_id=f'/dev/ttyUSB2')
 
     def get_device_state(self) -> dict[str, tuple[float, float]]:
         if self.rotator.current_position is None:

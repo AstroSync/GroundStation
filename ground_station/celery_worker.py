@@ -2,11 +2,6 @@ from __future__ import annotations
 import sys
 from celery import Celery
 from ground_station import celery_config
-from ground_station.hardware.naku_device_api import gs_device
-
-gs_device.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
-                  rx_port_or_serial_id=f'/dev/ttyUSB0',
-                  radio_port_or_serial_id=f'/dev/ttyUSB2')
 
 print('Created celery app')
 

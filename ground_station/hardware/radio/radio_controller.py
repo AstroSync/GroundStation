@@ -1,6 +1,7 @@
 from __future__ import annotations
 import threading
 import time
+from typing import Callable
 from dataclasses import dataclass
 from ast import literal_eval
 from typing import Optional
@@ -43,6 +44,8 @@ class RadioController(SX127x_Driver):
         self.implicit_mode: bool = kwargs.get('implicit_mode', False)  # fixed payload size
 
         self.__rx_thread = threading.Thread(name='rx_thread', target=self.rx_routine, daemon=True)
+        self.__rx_callback: Callable | None = None
+        self.__tx_callback: Callable | None = None
 
     def __init(self) -> None:
         self.interface.reset()
@@ -61,6 +64,12 @@ class RadioController(SX127x_Driver):
         self.set_rx_tx_fifo_base_addr(0, 0)
         self.set_freq(self.freq)
         self.set_low_data_rate_optimize(False)
+
+    def onReceive(self, callback: Callable):
+        self.__rx_callback = callback
+
+    def onTrancieve(self, callback: Callable):
+        self.__tx_callback = callback
 
     def start_rx_thread(self) -> None:
         if self.__rx_thread is not self.__rx_thread.is_alive():
@@ -110,6 +119,10 @@ class RadioController(SX127x_Driver):
         else:
             self.write_fifo(data)
             self.interface.run_tx_then_rx_cont()
+
+        if self.__tx_callback is not None:
+            self.__tx_callback(f'tx > {data}')
+
         if self.__stop_rx_routine_flag:
             self.start_rx_thread()
 
@@ -193,6 +206,8 @@ class RadioController(SX127x_Driver):
             if pkt is not None:
                 if len(pkt.data) > 0:
                     print(pkt)
+                    if self.__rx_callback is not None:
+                        self.__rx_callback(f'rx < {pkt.data}')
             time.sleep(1)
 
     def user_cli(self) -> None:

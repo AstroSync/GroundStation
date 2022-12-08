@@ -76,9 +76,9 @@ class Singleton(type):
 
 
 class NAKU(metaclass=Singleton):
-    def __init__(self, observer: dict) -> None:
+    def __init__(self) -> None:
         print('Initializing NAKU')
-        self.observer: dict = observer
+        self.observer: dict = {'name': 'Новосибирск', 'latitude': 54.842625, 'longitude': 83.095025, 'height': 170}
 
         self.tle_list_struct: dict[str, datetime | list[str] | None] = {'last_update': None, 'tle_string_list': None}
 
@@ -109,4 +109,4 @@ class NAKU(metaclass=Singleton):
     #     self.scheduler.remove_job(self.scheduler.get_jobs()[0].id)
 
 
-gs_device: NAKU = NAKU({'name': 'Новосибирск', 'latitude': 54.842625, 'longitude': 83.095025, 'height': 170})
+gs_device: NAKU = NAKU()

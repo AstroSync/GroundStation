@@ -39,21 +39,19 @@ def get_angle(self, **kwargs) -> dict:
 def radio_task(self, **kwargs) -> str | None:
     session = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
-    result: str | None = None
-    loc = {'result': result}
+    loc = {}
     ws = create_connection("ws://10.6.1.74:8080/websocket_api/ws/NSU_GS/123")
     try:
-        ws.send('start script')
         if session.script_id is not None:
             script = script_store.download_script(session.script_id)
             if script is not None:
                 print(script.content)
                 if len(script.content) > 0:
                     exec(script.content, globals(), loc)
+        else:
+            ws.send('there is no script')
     except SoftTimeLimitExceeded as exc:
         print(exc)
-        print(f'{loc=}')
-        print(f'{globals()=}')
     ws.send('time is over')
     ws.close()
     result = loc.get('result', None)

@@ -178,16 +178,16 @@ class SatellitePath:
         raise StopIteration
 
 test_size = 45
-test_sat_path = {
-    'altitude': np.linspace(0.0, test_size, num=test_size),
-    'azimuth': np.linspace(90.0, 90 + test_size, num=test_size),
-    'dist': np.zeros(test_size),
-    'alt_rate': np.ones(test_size),
-    'az_rate': np.ones(test_size),
-    'dist_rate': np.zeros(test_size),
-    't_points': [datetime.now() + timedelta(seconds=x) for x in range(test_size)],
-    'az_rotation_direction': 1
-}
+class TestSatellitePath:
+    altitude = np.linspace(0.0, test_size, num=test_size)
+    azimuth = np.linspace(90.0, 90 + test_size, num=test_size)
+    dist = np.zeros(test_size)
+    alt_rate = np.ones(test_size)
+    az_rate = np.ones(test_size)
+    dist_rate = np.zeros(test_size)
+    t_points = [datetime.now() + timedelta(seconds=x) for x in range(test_size)]
+    az_rotation_direction = 1
+
 
 # def convert_degrees(seq):
 #     """Recalculate angle sequence when it transits over 360 degrees.

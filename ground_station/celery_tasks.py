@@ -8,7 +8,7 @@ from ground_station.celery_worker import celery_app
 from ground_station.hardware.naku_device_api import NAKU, session_routine
 from ground_station.models.db import UserScriptModel, SessionModel
 
-from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time, test_sat_path
+from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time, TestSatellitePath
 from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
 from ground_station.web_secket_client import WebSocketClient
@@ -63,7 +63,7 @@ def rotator_task_emulation(self, **kwargs) -> None:
     try:
         path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
                                                                     session.finish)
-        session_routine(test_sat_path)  # type: ignore
+        session_routine(TestSatellitePath())  # type: ignore
     except SoftTimeLimitExceeded as exc:
         print(exc)
 

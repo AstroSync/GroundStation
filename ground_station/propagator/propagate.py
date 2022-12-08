@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import os
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Optional, Literal
 # from dateutil import parser
 from pytz import utc
@@ -19,8 +19,9 @@ import numpy as np
 
 
 OBSERVERS: dict[str, GeographicPosition] = {'NSU': wgs84.latlon(54.842625, 83.095025, 170),
-             'Красноярск': wgs84.latlon(56.010041, 92.852069),
-             'Москва': wgs84.latlon(55.4507, 37.3656)}
+                                            # 'Красноярск': wgs84.latlon(56.010041, 92.852069),
+                                            # 'Москва': wgs84.latlon(55.4507, 37.3656)
+                                            }
 
 satellites: list[EarthSatellite] = load.tle_file(os.path.join(os.path.dirname(__file__), 'cubesat_tle.txt'))
 
@@ -123,8 +124,8 @@ def events_for_observers(satellite: EarthSatellite, observers: dict, ts_1: Time,
 
 
 def get_sessions_for_sat(sat_name: str, observers: dict,
-                         t_1: date | str, t_2: Optional[date | str] = None) -> list[dict[str, Any]]:
-    satellite: EarthSatellite | None = get_sat_from_local_tle_file(sat_name.upper())
+                         t_1: date | str, t_2: Optional[date | str] = None, local_tle: bool = True) -> list[dict[str, Any]]:
+    satellite: EarthSatellite | None = get_sat_from_local_tle_file(sat_name.upper()) if local_tle else request_celestrak_sat_tle(sat_name.upper())
     if satellite is None:
         raise ValueError
     start_time: float = time.time()
@@ -206,11 +207,11 @@ class SatellitePath:
 
 
 def angle_points_for_linspace_time(sat: str, observer: str, t_1: datetime, t_2: datetime,
-                                   sampling_rate=3.3333) -> SatellitePath:
+                                   sampling_rate=3.3333, local_tle: bool = True) -> SatellitePath:
     timescale: Timescale = load.timescale()
     time_points: Time = timescale.linspace(timescale.from_datetime(t_1), timescale.from_datetime(t_2),
                                      int((t_2 - t_1).seconds * sampling_rate))
-    satellite: EarthSatellite | None = get_sat_from_local_tle_file(sat)
+    satellite: EarthSatellite | None = get_sat_from_local_tle_file(sat.upper()) if local_tle else request_celestrak_sat_tle(sat.upper())
     if satellite is not None:
         sat_position: VectorSum = (satellite - OBSERVERS[observer])
     else:
@@ -224,14 +225,15 @@ if __name__ == '__main__':
     # # sessions = get_sessions_for_sat('NORBI', '19.06.2022', '19.06.2022')
     # # print('response:', sessions, len(sessions))
     # # print(request_celestrak_sat_tle('NORBI'))
-    # start_time_: datetime = datetime(2022, 4, 15, 19, 5, 0, tzinfo=timezone.utc)
-    # points: SatellitePath = angle_points_for_linspace_time('NORBI', 'Новосибирск', start_time_, start_time_ + timedelta(seconds=4))
-    # print(points)
-    # for alt, az, t_point in points:
-    #     print(alt, az, t_point)
+    start_time_: datetime = datetime(2022, 4, 15, 19, 5, 0, tzinfo=utc)
+    points: SatellitePath = angle_points_for_linspace_time('NORBI', 'NSU', start_time_, start_time_ + timedelta(seconds=4), local_tle=False)
+    print(points)
+    for alt, az, t_point in points:
+        print(alt, az, t_point)
 
     # print(convert_degrees(np.array([*np.arange(350, 359), *np.arange(0, 9)])))
     # print(convert_degrees(np.array([*np.arange(9, 0, -1), *np.arange(359, 350, -1)])))
 
-    pass
+    print(request_celestrak_sat_tle('NORBI'))
+    print(get_sessions_for_sat('NORBI', OBSERVERS, datetime.today(), datetime.today() + timedelta(hours=48)))
 

@@ -29,11 +29,11 @@ class RadioController(SX127x_Driver):
         super().__init__(**kwargs)  # super(LoRa_Controller, self).__init__(**kwargs)
         self.api_name: str = api_name
         self.coding_rate: int = kwargs.get('ecr', self.cr.CR5)  # error coding rate
-        self.bandwidth: int = kwargs.get('bw', self.bw.BW125)  # bandwidth
-        self.spread_factor: int = kwargs.get('sf', self.sf.SF9)  # spreading factor
-        self.freq: int = kwargs.get('freq', 436000000)   # 436700000
+        self.bandwidth: int = kwargs.get('bw', self.bw.BW250)  # bandwidth  BW250
+        self.spread_factor: int = kwargs.get('sf', self.sf.SF10)  # spreading factor  SF10
+        self.freq: int = kwargs.get('freq', 436700000)   # 436700000
         self.crc: bool = kwargs.get('crc', True)  # check crc
-        self.tx_power: int = kwargs.get('tx_power', 1)  # dB
+        self.tx_power: int = kwargs.get('tx_power', 10)  # dB
         self.sync_word: int = kwargs.get('sync_word', 0x12)
         self.preamble_len: int = kwargs.get('preamble_len', 8)
         self.auto_gain_control: bool = kwargs.get('agc', True)  # auto gain control

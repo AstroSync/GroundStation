@@ -63,7 +63,9 @@ def session_routine(path_points: SatellitePath) -> None:
         RotatorDriver().set_boundary_minimum_angle('1', path_points.azimuth[-1] - 1)
     while datetime.now(tz=utc) < path_points.t_points[0]:  # waiting for start session
         time.sleep(0.01)
-    RotatorDriver().set_speed(normal_speed, normal_speed)
+    while RotatorDriver().rotator_model.azimuth.speed is None:
+        RotatorDriver().set_speed(normal_speed, normal_speed)
+        time.sleep(0.2)
     print('start rotator session routine')
     for altitude, azimuth, time_point in path_points:
         if RotatorDriver().rotator_model.azimuth.speed > normal_speed:

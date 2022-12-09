@@ -48,5 +48,5 @@ if __name__ == '__main__':
                                                             sat_name='NORBI',
                                                             priority=1,
                                                             start=start_time,
-                                                            duration_sec=15)
+                                                            duration_sec=70)
     print(register_sessions([input_data])[0].get())

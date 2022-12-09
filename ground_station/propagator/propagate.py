@@ -177,16 +177,17 @@ class SatellitePath:
             return var
         raise StopIteration
 
-test_size = 45
+
 class TestSatellitePath:
-    altitude = np.linspace(0.0, test_size, num=test_size)
-    azimuth = np.linspace(90.0, 90 + test_size, num=test_size)
-    dist = np.zeros(test_size)
-    alt_rate = np.ones(test_size)
-    az_rate = np.ones(test_size)
-    dist_rate = np.zeros(test_size)
-    az_rotation_direction = 1
-    def __init__(self) -> None:
+
+    def __init__(self, test_size: int = 45) -> None:
+        self.altitude = np.linspace(0.0, test_size, num=test_size)
+        self.azimuth = np.linspace(90.0, 90 + test_size, num=test_size)
+        self.dist = np.zeros(test_size)
+        self.alt_rate = np.ones(test_size)
+        self.az_rate = np.ones(test_size)
+        self.dist_rate = np.zeros(test_size)
+        self.az_rotation_direction = 1
         self.t_points = [datetime.now(tz=timezone.utc) + timedelta(seconds=6 + x) for x in range(test_size)]
         self.__index: int = 0
     def __getitem__(self, key) -> tuple[float, float, datetime]:

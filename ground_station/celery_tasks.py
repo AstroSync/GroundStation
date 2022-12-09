@@ -56,7 +56,7 @@ def rotator_task_emulation(self, **kwargs) -> None:
     try:
         path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
                                                                     session.finish)
-        session_routine(TestSatellitePath())  # type: ignore
+        session_routine(TestSatellitePath(kwargs.get('duration_sec', 45)))  # type: ignore
     except SoftTimeLimitExceeded as exc:
         print(exc)
 

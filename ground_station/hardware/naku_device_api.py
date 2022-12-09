@@ -6,7 +6,7 @@ from ground_station.hardware.radio.radio_controller import RadioController
 from ground_station.hardware.rotator.rotator_driver import RotatorDriver
 from ground_station.hardware.serial_utils import convert_to_port, get_available_ports
 from ground_station.propagator.propagate import SatellitePath
-
+from serial.serialutil import SerialException
 
 class Singleton(type):
     _instances: dict = {}
@@ -46,8 +46,12 @@ class NAKU(metaclass=Singleton):
             if not all(ports.values()):
                 raise RuntimeError(f'Some ports are unavailable {ports}. There are only next ports: {get_available_ports()}')
             # self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])    # type: ignore
-            self.radio.connect(port=ports['radio_port'])  # type: ignore
-            self.connection_status = True
+            try:
+                self.radio.connect(port=ports['radio_port'])  # type: ignore
+                self.connection_status = True
+            except SerialException as err:
+                print(err)
+
 
 def session_routine(path_points: SatellitePath) -> None:
     print(f'Start session routine:\n{path_points}')

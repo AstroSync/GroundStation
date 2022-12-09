@@ -28,7 +28,7 @@ def register_sessions_test():
                                         duration_sec=20) for start in [start_time, start_time + timedelta(seconds=80)]]
     sessions: list[Session] = [Session(**session.dict()) for session in new_sessions]
     store.append(*sessions)
-    async_result = [celery_register_session(session) for session in sessions]
+    async_result = [celery_register_session_test(session) for session in sessions]
     return async_result
 
 

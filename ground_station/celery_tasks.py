@@ -1,7 +1,5 @@
 from __future__ import annotations
 from datetime import timedelta
-import os
-import time
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_prerun, task_postrun
 from ground_station.celery_worker import celery_app
@@ -13,12 +11,6 @@ from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
 from ground_station.web_secket_client import WebSocketClient
 
-
-@celery_app.task
-def connect() -> None:
-    NAKU().connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "/dev/ttyUSB1")}',
-                      rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BI")}',
-                      radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJ")}')
 
 @celery_app.task
 def set_angle(az, el) -> None:

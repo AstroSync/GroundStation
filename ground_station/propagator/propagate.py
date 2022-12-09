@@ -6,7 +6,7 @@ import time
 from datetime import date, datetime, timedelta
 from typing import Any, Optional, Literal
 # from dateutil import parser
-from pytz import utc
+from datetime import timezone
 from skyfield.api import load
 from skyfield.sgp4lib import EarthSatellite
 from skyfield.timelib import Time, Timescale
@@ -64,12 +64,12 @@ def convert_time_args(t_1: date | str, t_2: date | str | None = None) -> tuple[T
     if isinstance(t_2, str):
         t_2 = date.fromisoformat(t_2)
     if t_2 is None:
-        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.max.time(), tzinfo=utc))
+        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.max.time(), tzinfo=timezone.utc))
     elif t_2 == t_1:
-        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.max.time(), tzinfo=utc))
+        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.max.time(), tzinfo=timezone.utc))
     else:
-        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.min.time(), tzinfo=utc))
-    t_1_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.now().time(), tzinfo=utc))
+        t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.min.time(), tzinfo=timezone.utc))
+    t_1_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.now().time(), tzinfo=timezone.utc))
     return t_1_ts, t_2_ts
 
 
@@ -98,9 +98,9 @@ def map_events(event_type_list: list[int], event_time_list: list[Time], location
     event_dict_list: list[dict[str, datetime | int | str]] = []
     for event_type, event_time in zip(event_type_list, event_time_list):
         if event_type == 0:
-            event_dict['start_time'] = event_time.astimezone(utc)  # type: ignore
+            event_dict['start_time'] = event_time.astimezone(timezone.utc)  # type: ignore
         elif event_type == 2:
-            event_dict['finish_time'] = event_time.astimezone(utc)  # type: ignore
+            event_dict['finish_time'] = event_time.astimezone(timezone.utc)  # type: ignore
             event_dict['duration_sec'] = (event_dict['finish_time'] - event_dict['start_time']).seconds  # type: ignore
             event_dict['finish_time'] = str(event_dict['finish_time'])
             event_dict['start_time'] = str(event_dict['start_time'])
@@ -185,7 +185,7 @@ class TestSatellitePath:
     alt_rate = np.ones(test_size)
     az_rate = np.ones(test_size)
     dist_rate = np.zeros(test_size)
-    t_points = [datetime.now(tz=utc) + timedelta(seconds=x) for x in range(test_size)]
+    t_points = [datetime.now(tz=timezone.utc) + timedelta(seconds=6 + x) for x in range(test_size)]
     az_rotation_direction = 1
     __index: int = 0
     def __getitem__(self, key) -> tuple[float, float, datetime]:
@@ -250,7 +250,7 @@ if __name__ == '__main__':
     # # sessions = get_sessions_for_sat('NORBI', '19.06.2022', '19.06.2022')
     # # print('response:', sessions, len(sessions))
     # # print(request_celestrak_sat_tle('NORBI'))
-    start_time_: datetime = datetime.now(tz=utc)
+    start_time_: datetime = datetime.now(tz=timezone.utc)
     points: SatellitePath = angle_points_for_linspace_time('NORBI', 'NSU', start_time_, start_time_ + timedelta(seconds=4), local_tle=False)
     print(points)
     for alt, az, t_point in points:

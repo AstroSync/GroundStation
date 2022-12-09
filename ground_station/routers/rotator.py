@@ -22,7 +22,7 @@ async def rotator_config(rotator_model: RotatorModel):
 @router.post("/set_angle")
 async def set_angle(az: float, el: float):
     # RotatorDriver().set_angle(az, el)
-    await celery_client.set_angle(az, el)
+    celery_client.set_angle(az, el)
     return {"message": 'OK'}
 
 
@@ -30,7 +30,7 @@ async def set_angle(az: float, el: float):
 async def set_random_angle():
     az, el = random.uniform(0, 180), random.uniform(-90, 90)
     # RotatorDriver().set_angle(az, el)
-    await celery_client.set_angle(az, el)
+    celery_client.set_angle(az, el)
     return {"az": f'{az:.2f}', 'el': f'{el:.2f}'}
 
 
@@ -42,7 +42,7 @@ async def set_speed(az_speed: float, el_speed: float):
 
 @router.get("/")
 async def get_position():
-    position: tuple[float, float] = await celery_client.get_position()  # type: ignore
+    position: tuple[float, float] = celery_client.get_position()  # type: ignore
     print(position)
     return {"az": position[0], "el": position[1]}
 

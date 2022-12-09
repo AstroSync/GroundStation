@@ -58,28 +58,6 @@ class ResultSessionModel(BaseModel):
     result: list = []
     traceback: str = ''
 
-
-
-# class DbTaskModel(BaseModel):
-#     _id: UUID
-#     user_id: UUID
-#     username: str
-#     script_id: UUID | None
-#     sat_name: str
-#     registration_time: datetime
-#     time_range: TimeRangeModel
-#     # priority: int
-#     # start: datetime
-#     # duration_sec: int
-#     # initial_start: datetime
-#     # initial_duration_sec: int
-#     # parts: int
-#     station: str
-#     status: str
-#     result: str
-#     traceback: str
-
-
 class TimeRangeModel(BaseModel):
     _id: UUID = Field(..., alias="_id")
     priority: int

@@ -3,10 +3,8 @@ from __future__ import annotations
 import copy
 import os
 import time
-from datetime import date, datetime, timedelta
-from typing import Any, Optional, Literal
-# from dateutil import parser
-from datetime import timezone
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Literal
 from skyfield.api import load
 from skyfield.sgp4lib import EarthSatellite
 from skyfield.timelib import Time, Timescale
@@ -26,7 +24,7 @@ OBSERVERS: dict[str, GeographicPosition] = {'NSU': wgs84.latlon(54.842625, 83.09
 satellites: list[EarthSatellite] = load.tle_file(os.path.join(os.path.dirname(__file__), 'cubesat_tle.txt'))
 
 
-def get_sat_from_local_tle_file(name: str) -> Optional[EarthSatellite]:
+def get_sat_from_local_tle_file(name: str) -> EarthSatellite | None:
     start_time: float = time.time()
     try:
         cubesat: EarthSatellite = list(filter(lambda sat: sat.name == name, satellites))[0]
@@ -124,7 +122,7 @@ def events_for_observers(satellite: EarthSatellite, observers: dict, ts_1: Time,
 
 
 def get_sessions_for_sat(sat_name: str, observers: dict,
-                         t_1: date | str, t_2: Optional[date | str] = None, local_tle: bool = True) -> list[dict[str, Any]]:
+                         t_1: date | str, t_2: date | str | None = None, local_tle: bool = True) -> list[dict[str, Any]]:
     satellite: EarthSatellite | None = get_sat_from_local_tle_file(sat_name.upper()) if local_tle else request_celestrak_sat_tle(sat_name.upper())
     if satellite is None:
         raise ValueError

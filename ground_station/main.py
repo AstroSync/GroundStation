@@ -1,32 +1,26 @@
 from __future__ import annotations
-# import sys
-import uvicorn
-from fastapi import FastAPI
+from celery import Celery
+from ground_station import celery_config
 
-from fastapi.middleware.cors import CORSMiddleware
-from ground_station.routers import basic, websocket_api, schedule, radio, rotator
+print('Created celery app')
 
-app: FastAPI = FastAPI(title="Ground station API")
-app.include_router(rotator.router)
-app.include_router(radio.router)
-app.include_router(schedule.router)
-app.include_router(websocket_api.router)
-app.include_router(basic.router)
 
-# idp.add_swagger_config(app)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# uvicorn GS_backend.__main__:app --proxy-headers --host 0.0.0.0 --port 8080
-
-if __name__ == '__main__':
-    uvicorn.run(app, host="0.0.0.0", port=8080)  # 192.168.31.30
-# JobEvent (code=1024)>, code: 1024, type: <class 'int'>
-# JobSubmissionEvent (code=32768)>, code: 32768, type: <class 'int'
-# <JobExecutionEvent (code=4096)>, code: 4096, type: <class 'int'
+host = '10.6.1.74' # 'localhost'
+celery_app: Celery = Celery('ground_station', broker=f'amqp://guest:guest@{host}:5672//',
+                            # backend="redis://localhost:6379/0",
+                            # backend='mongodb://root:rootpassword@astrosync.ru:27017/?authMechanism=DEFAULT',
+                            backend=f'mongodb://root:rootpassword@{host}:27017/?authMechanism=DEFAULT',
+                            # backend = 'db+postgresql+psycopg2://testkeycloakuser:testkeycloakpassword@postgres/testkeycloakdb',
+                            include=['ground_station.celery_tasks'])
+celery_app.config_from_object(celery_config)
+# celery_app.send_task('ground_station.celery_tasks.init_devices', ignore_result=True, countdown=2).get()
+if __name__ == "__main__":
+    argv = [
+        'worker',
+        '--loglevel=INFO',
+        '--hostname=NSU'
+    ]
+    celery_app.worker_main(argv)
+# celery -A ground_station.celery_worker worker --loglevel=INFO --hostname=NSU@%h
+# celery -A ground_station.celery_worker flower --persistent=True --broker_api=http://guest:guest@rabbitmq:15672/api --basic_auth=user:pass
+# celery -A ground_station.celery_worker flower --persistent=True --broker_api=http://guest:guest@rabbitmq:15672/api/ --basic_auth=user:pass --tasks_columns=name,uuid,state,result,received,eta,started,runtime,worker

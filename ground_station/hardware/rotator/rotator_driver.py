@@ -203,7 +203,7 @@ class RotatorDriver(metaclass=Singleton):
                         try:
                             self.rotator_model.azimuth.speed = float(speed[0])
                             self.rotator_model.elevation.speed = float(speed[1])
-                        except (ValueError,  IndexError)::
+                        except (ValueError,  IndexError):
                             print(f'Get incorrect data: {decoded_data.encode()}')
                 except ValueError as err:
                     print(f'rx_loop error: {err}')

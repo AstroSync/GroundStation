@@ -1,5 +1,6 @@
 from __future__ import annotations
 import hashlib
+import json
 
 import os
 from datetime import date, datetime
@@ -35,10 +36,68 @@ async def root():
     return {"message": "OK"}
 
 
+
 @router.get("/satellites")
 async def satellites():
-    print('return satellite list')
-    return JSONResponse(content=sat_names)
+    return sat_names
+
+
+# class DateTimeEncoder(json.JSONEncoder):
+
+#     def default(self, obj):
+#         if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+#             return obj.isoformat()
+#         elif isinstance(obj, datetime.timedelta):
+#             return (datetime.datetime.min + obj).time().isoformat()
+
+#         return super(DateTimeEncoder, self).default(obj)
+
+
+# @brouter.post("/register_new_session")
+# async def register_new_session(data: RegisterSessionModel):
+#     try:
+#         print(f'type: {type(data)}, data: {data.json()}')
+#         encoder = DateTimeEncoder()
+#         async with aiohttp.ClientSession(json_serialize=encoder.encode) as session:
+#             async with session.post(f"http://{os.environ.get('ANTENNA_URL')}/schedule/add_task",
+#                                     json=data.dict(),
+#                                     headers={'Content-Type': 'application/json'}) as resp:
+#                 result = await resp.text()
+#         print(result)
+#         return result
+#     except Exception as err:
+#         return f'Error: {err}'
+
+
+# @router.get("/check_station")
+# async def check_station():
+#     try:
+#         async with aiohttp.ClientSession() as session:
+#             async with session.get(f"http://{os.environ.get('ANTENNA_URL')}/app") as resp:
+#                 result = await resp.text()
+#         print(result)
+#         return result
+#     except Exception as err:
+#         return f'Error: {err}'
+
+
+# @router.get("/sessions")
+# async def sessions(sat_name: str, start_date: Union[date, str] = date.today(),
+#                    end_date: Union[date, str] = date.today()):
+#     print(f'sat_name: {sat_name}, start_date: {start_date}, end_date: {end_date}')
+#     session_list = get_sessions_for_sat(sat_name=sat_name, t1=start_date, t2=end_date)
+#     if session_list == ValueError:
+#         raise HTTPException(status_code=404, detail="Satellite name was not found.")
+#     return session_list
+
+
+@router.get("/json/{file_name}")
+async def get_json_file(file_name: str):
+    try:
+        with open(os.path.join(os.path.dirname(__file__), f"../geo_data/{file_name}"), encoding='utf-8') as file:
+            return json.load(file)
+    except Exception as exc:
+        raise HTTPException(status_code=404, detail="File was not found.") from exc
 
 
 @router.post("/register_new_session")

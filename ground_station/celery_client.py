@@ -15,6 +15,24 @@ def celery_register_session(model: Session):
                                                    eta=model.start,
                                                    soft_time_limit=soft_time_limit,
                                                    time_limit=time_limit)
+    rotator = signature('ground_station.celery_tasks.rotator_task', args=(),
+                                                   kwargs=model.__dict__,
+                                                   eta=model.start,
+                                                   soft_time_limit=soft_time_limit,
+                                                   time_limit=time_limit)
+
+    group_task: group = group(radio, rotator)
+    return group_task.apply_async()
+
+def celery_register_session_test(model: Session):
+    soft_time_limit: float = model.duration_sec + 3.0
+    time_limit: float = soft_time_limit + 8.0
+
+    radio = signature('ground_station.celery_tasks.radio_task', args=(),
+                                                   kwargs=model.__dict__,
+                                                   eta=model.start,
+                                                   soft_time_limit=soft_time_limit,
+                                                   time_limit=time_limit)
     rotator = signature('ground_station.celery_tasks.rotator_task_emulation', args=(),
                                                    kwargs=model.__dict__,
                                                    eta=model.start,

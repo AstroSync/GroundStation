@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from ground_station.models.api import RegisterSessionModel
-
+from ground_station import sessions_api
 # from ground_station.db_models import RegisterSessionModel
 
 
@@ -13,21 +13,16 @@ async def get_schedule():
     return ''
 
 
-@router.post('/add_task')
-async def add_task(model: RegisterSessionModel):
-    # Будем предполагать, что конфигурация радия задачется из пользовательского скрипта
-    # TODO: добавить возможность конфигурации радио из отдельного файла конфигурации
-    data: dict = model.dict()
-    sat_name = data['sat_name']
-    session_list = data['session_list']
-    user_script = data['user_script']
-    print(sat_name, session_list, user_script)
-    # pending_collection.insert_one(task_model.dict())
-
-    # for session in session_list:
-    #     add_new_session('', data['sat_name'], session['start_time'], session['finish_time'])
+@router.post('/register_sessions')
+async def register_sessions(new_sessions: list[RegisterSessionModel]):
+    sessions_api.register_sessions(new_sessions)
     return {"message": "OK"}
 
+
+@router.post('/register_sessions_test')
+async def register_sessions_test():
+    sessions_api.register_sessions_test()
+    return {"message": "OK"}
 
 # @router.get('/get_pending_tasks')
 # async def get_pending_tasks(user_id: int):

@@ -6,9 +6,18 @@ from pymongo.database import Database
 from pymongo.collection import Collection
 from pymongo.results import DeleteResult, InsertOneResult
 
-from ground_station.models.db import UserScriptModel
+from ground_station.models.db import ResultSessionModel, UserScriptModel
 
-class ScriptsStore:
+class Singleton(type):
+    _instances: dict = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class UserStore(metaclass=Singleton):
     def __init__(self, host: str, username: str, password: str) -> None:
         super().__init__()
         try:
@@ -18,9 +27,23 @@ class ScriptsStore:
             db: Database = client['UserData']
             print("Connected to MongoDB")
             self.scripts: Collection = db['scripts']
+            self.sessions: Collection = db['sessions']
             self.scripts.create_index([( "user_id", ASCENDING )])
         except TimeoutError as e:
             print(f'Database connection failed: {e}')
+
+    def save_session_result(self, model: ResultSessionModel):
+        result: InsertOneResult = self.sessions.insert_one(model.dict())
+        return result.inserted_id
+
+    def get_session_result_by_id(self, session_id: UUID) -> ResultSessionModel | None:
+        result: dict | None = self.sessions.find_one({'_id': session_id})
+        if result is not None:
+            return ResultSessionModel.parse_obj(result)
+        return None
+
+    def get_session_result_by_user(self, user_id: UUID) -> list[ResultSessionModel]:
+        return [ResultSessionModel.parse_obj(result) for result in list(self.sessions.find({'_id': user_id}))]
 
     def save_script(self, script: UserScriptModel):
         result: InsertOneResult = self.scripts.insert_one(script.dict(by_alias=True))
@@ -42,7 +65,7 @@ class ScriptsStore:
         result: DeleteResult = self.scripts.delete_one({'script_id': script_id})
         return result.deleted_count
 
-script_store = ScriptsStore('10.6.1.74', 'root', 'rootpassword')
+script_store = UserStore('10.6.1.74', 'root', 'rootpassword')
 
 if __name__ == '__main__':
     res = script_store.download_script(UUID('e32d478f-e305-4a74-94dc-47234d17d959'))

@@ -45,6 +45,18 @@ class SessionModel(BaseModel):
     initial_start: datetime
     initial_duration_sec: int
 
+class ResultSessionModel(BaseModel):
+    user_id: UUID
+    username: str
+    script_id: UUID | None
+    sat_name: str
+    station: str
+    status: str
+    registration_time: datetime
+    result: list[str]
+    traceback: str
+
+
 
 # class DbTaskModel(BaseModel):
 #     _id: UUID

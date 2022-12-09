@@ -200,12 +200,19 @@ class RadioController(SX127x_Driver):
     #     mem = {k: dump_mem[v - 1] for k, v in self.reg.items()}
     #     return SX127x_Registers(mem)
 
+    def clear_rx_buffer(self):
+        self.__rx_buffer.clear()
+
+    def get_rx_buffer(self):
+        return self.__rx_buffer
+
     def rx_routine(self) -> None:
         while not self.__stop_rx_routine_flag:
             pkt: LoRaRxPacket | None = self.check_rx_input()
             if pkt is not None:
                 if len(pkt.data) > 0:
                     print(pkt)
+                    self.__rx_buffer.append(pkt.data)
                     if self.__rx_callback is not None:
                         self.__rx_callback(f'rx < {pkt.data}')
             time.sleep(0.5)

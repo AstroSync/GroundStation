@@ -5,10 +5,10 @@ from celery.signals import task_prerun, task_postrun
 from ground_station.celery_worker import celery_app
 from ground_station.hardware.naku_device_api import NAKU, session_routine
 from ground_station.hardware.rotator.rotator_driver import RotatorDriver
-from ground_station.models.db import UserScriptModel, SessionModel
+from ground_station.models.db import ResultSessionModel, UserScriptModel, SessionModel
 
 from ground_station.propagator.propagate import SatellitePath, angle_points_for_linspace_time, TestSatellitePath
-from ground_station.sessions_store.scripts_store import script_store
+from ground_station.sessions_store.scripts_store import UserStore, script_store
 from ground_station.sessions_store.session import Session
 from ground_station.web_secket_client import WebSocketClient
 
@@ -26,7 +26,7 @@ def get_angle():
 
 @celery_app.task(bind=True)
 def radio_task(self, **kwargs) -> str | None:
-    session = SessionModel.parse_obj(kwargs)
+    session: SessionModel = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
     loc = {}
     ws_client = WebSocketClient()
@@ -47,6 +47,9 @@ def radio_task(self, **kwargs) -> str | None:
     ws_client.close()
     result = loc.get('result', None)
     print(f'RADIO RESULT: {result}')
+    session_result = ResultSessionModel(**session.dict())
+    session_result.result = NAKU().radio.get_rx_buffer()
+    UserStore('10.6.1.74', 'root', 'rootpassword').save_session_result(session_result)
     return result
 
 

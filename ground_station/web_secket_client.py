@@ -22,7 +22,12 @@ class WebSocketClient(metaclass=Singleton):
         if not self.ws.connected:
             print('create ws client')
             self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
-        self.ws.send(payload)
+        try:
+            self.ws.send(payload)
+        except BrokenPipeError as err:
+            print('websocket client broken pipe\n')
+            print(err)
+            self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
 
     def close(self):
         return self.ws.close()

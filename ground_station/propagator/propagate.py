@@ -185,9 +185,10 @@ class TestSatellitePath:
     alt_rate = np.ones(test_size)
     az_rate = np.ones(test_size)
     dist_rate = np.zeros(test_size)
-    t_points = [datetime.now(tz=timezone.utc) + timedelta(seconds=6 + x) for x in range(test_size)]
     az_rotation_direction = 1
-    __index: int = 0
+    def __init__(self) -> None:
+        self.t_points = [datetime.now(tz=timezone.utc) + timedelta(seconds=6 + x) for x in range(test_size)]
+        self.__index: int = 0
     def __getitem__(self, key) -> tuple[float, float, datetime]:
         return (self.altitude.__getitem__(key), self.azimuth.__getitem__(key),
                self.t_points.__getitem__(key))

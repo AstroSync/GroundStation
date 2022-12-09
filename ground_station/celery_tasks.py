@@ -54,9 +54,12 @@ def radio_task(self, **kwargs) -> str | None:
     ws_client.close()
     result = loc.get('result', None)
     print(f'RADIO RESULT: {result}')
-    session_result = ResultSessionModel(**session.dict())
+    session_result = ResultSessionModel(user_id=session.user_id, username=session.username,
+                                        script_id=session.script_id, sat_name=session.sat_name, station=session.station,
+                                        registration_time=session.registration_time)
     session_result.result = NAKU().radio.get_rx_buffer()
     UserStore('10.6.1.74', 'root', 'rootpassword').save_session_result(session_result)
+    NAKU().radio.clear_rx_buffer()
     return result
 
 

@@ -51,10 +51,9 @@ class ResultSessionModel(BaseModel):
     script_id: UUID | None
     sat_name: str
     station: str
-    status: str
     registration_time: datetime
-    result: list[str]
-    traceback: str
+    result: list = []
+    traceback: str = ''
 
 
 

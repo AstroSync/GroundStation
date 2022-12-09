@@ -52,6 +52,9 @@ class ResultSessionModel(BaseModel):
     sat_name: str
     station: str
     registration_time: datetime
+    start_time: datetime
+    duration_sec: int
+    priority: int
     result: list = []
     traceback: str = ''
 

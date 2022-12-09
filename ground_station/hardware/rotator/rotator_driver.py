@@ -19,8 +19,14 @@ def try_to_connect(com_port: str, baudrate: int) -> Optional[SerialBase]:
         print(f'Rotator connection error: {err}')
         return None
 
+class Singleton(type):
+    _instances: dict = {}
 
-class RotatorDriver:
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+class RotatorDriver(metaclass=Singleton):
     def __init__(self, api_name='rotator') -> None:
         self.api_name: str = api_name
         self.reciever: Optional[SerialBase] = None
@@ -39,6 +45,7 @@ class RotatorDriver:
         self.tx_queue = Queue()
         self.is_need_to_update_model: bool = False
         self.tx_thread_sleep_time: float = 0.1
+        self.connect(tx_port='/dev/ttyUSB1', rx_port='/dev/ttyUSB0')
 
     def connect(self, rx_port: str, tx_port: str) -> None:
         if not self.connection_flag:

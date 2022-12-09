@@ -14,9 +14,16 @@ from ground_station.web_secket_client import WebSocketClient
 
 
 @celery_app.task
+def init_devices():
+    RotatorDriver()
+    NAKU()
+
+
+@celery_app.task
 def set_angle(az, el) -> None:
     print(f'set angle {az=}, {el=}')
     RotatorDriver().set_angle(az, el)
+
 
 @celery_app.task
 def get_angle():

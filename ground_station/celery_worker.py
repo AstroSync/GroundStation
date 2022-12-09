@@ -22,7 +22,7 @@ else:  # docker
                                 # backend = 'db+postgresql+psycopg2://testkeycloakuser:testkeycloakpassword@postgres/testkeycloakdb',
                                 include=['ground_station.celery_tasks'])
 celery_app.config_from_object(celery_config)
-
+celery_app.send_task('ground_station.celery_tasks.init_devices', ignore_result=True).get()
 
 # celery -A ground_station.celery_worker worker --loglevel=INFO --hostname=NSU@%h
 # celery -A ground_station.celery_worker flower --persistent=True --broker_api=http://guest:guest@rabbitmq:15672/api --basic_auth=user:pass

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import APIRouter
 
 from ground_station.models.api import RegisterSessionModel
@@ -20,8 +21,8 @@ async def register_sessions(new_sessions: list[RegisterSessionModel]):
 
 
 @router.post('/register_sessions_test')
-async def register_sessions_test():
-    sessions_api.register_sessions_test()
+async def register_sessions_test(start_time: datetime = datetime.now() + timedelta(seconds=6), duration_sec: int = 10):
+    sessions_api.register_sessions_test(start_time, duration_sec)
     return {"message": "OK"}
 
 # @router.get('/get_pending_tasks')

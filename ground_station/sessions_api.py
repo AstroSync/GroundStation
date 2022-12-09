@@ -17,15 +17,14 @@ def register_sessions(new_sessions: list[RegisterSessionModel]):
     return async_result
 
 
-def register_sessions_test():
-    start_time = datetime.now() + timedelta(seconds=6)
+def register_sessions_test(start_time: datetime = datetime.now() + timedelta(seconds=6), duration: int = 10):
     new_sessions = [RegisterSessionModel(user_id=UUID('388c01db-52a2-4192-9d6e-131958ea9e3a'),
                                         script_id=UUID('6e867ffa-264f-49a7-a58b-71de451f1c49'),
                                         username='kek',
                                         sat_name='NORBI',
                                         priority=1,
                                         start=start,
-                                        duration_sec=20) for start in [start_time, start_time + timedelta(seconds=80)]]
+                                        duration_sec=duration) for start in [start_time, start_time + timedelta(seconds=duration + 80)]]
     sessions: list[Session] = [Session(**session.dict()) for session in new_sessions]
     store.append(*sessions)
     async_result = [celery_register_session_test(session) for session in sessions]
@@ -58,12 +57,4 @@ def get_my_satellites(user_id: UUID) -> list:
 
 
 if __name__ == '__main__':
-    start_time = datetime.now() + timedelta(seconds=6)
-    input_data: RegisterSessionModel = RegisterSessionModel(user_id=UUID('388c01db-52a2-4192-9d6e-131958ea9e3a'),
-                                                            script_id=UUID('6e867ffa-264f-49a7-a58b-71de451f1c49'),
-                                                            username='kek',
-                                                            sat_name='NORBI',
-                                                            priority=1,
-                                                            start=start_time,
-                                                            duration_sec=10)
-    print(register_sessions([input_data])[0].get())
+    print(register_sessions_test(duration=70))

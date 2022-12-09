@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # print(register_session(data).get())
     # print(connect())
     # print(Model.parse_obj(get_position().get()))
-    print(set_angle(80, 0))
+    print(set_angle(70, 0))
     time.sleep(2)
     print(get_position())
     # print(celery_app.control.purge())

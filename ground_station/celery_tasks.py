@@ -13,22 +13,22 @@ from ground_station.sessions_store.scripts_store import script_store
 from ground_station.sessions_store.session import Session
 from ground_station.web_secket_client import WebSocketClient
 
-gs_device: NAKU = NAKU()
 
 @celery_app.task
 def connect() -> None:
-    gs_device.connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "/dev/ttyUSB1")}',
+    NAKU().connect(tx_port_or_serial_id=f'{os.environ.get("TX_PORT", "/dev/ttyUSB1")}',
                       rx_port_or_serial_id=f'{os.environ.get("RX_PORT", "A50285BI")}',
                       radio_port_or_serial_id=f'{os.environ.get("RADIO_PORT", "AH06T3YJ")}')
 
 @celery_app.task
 def set_angle(az, el) -> None:
-    gs_device.rotator.set_angle(az, el)
+    print(f'set angle {az=}, {el=}')
+    NAKU().rotator.set_angle(az, el)
 
 @celery_app.task
 def get_angle():
     # model = device.rotator.rotator_model.__dict__
-    return gs_device.rotator.get_position()
+    return NAKU().rotator.current_position
 
 
 @celery_app.task(bind=True)

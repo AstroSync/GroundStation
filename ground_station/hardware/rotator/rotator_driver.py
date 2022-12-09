@@ -122,7 +122,7 @@ class RotatorDriver:
                     else:
                         self.tx_thread_sleep_time = 0.1
                 except Empty:
-                    self.tx_queue.put(b'Y\r')
+                    self.tx_queue.put_nowait(b'Y\r')
 
     # 'Y' command terminated by \r
     # 'G0I' command terminated by \r\r

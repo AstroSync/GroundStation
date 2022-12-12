@@ -1,4 +1,9 @@
 from __future__ import annotations
+from io import StringIO
+import os
+from tempfile import NamedTemporaryFile
+from pylint.lint import Run
+from pylint.reporters.text import TextReporter
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.signals import task_prerun, task_postrun
 from ground_station.main import celery_app
@@ -27,6 +32,22 @@ def set_angle(az, el) -> None:
 def get_angle():
     # model = device.rotator.rotator_model.__dict__
     return RotatorDriver().current_position
+
+@celery_app.task
+def pylint_check(content: bytes) -> tuple[int, int, str]:
+    file_copy = NamedTemporaryFile(delete=False)
+    file_copy.write(content)  # copy the received file data into a new temp file.
+    file_copy.seek(0)  # move to the beginning of the file
+
+    pylint_output: StringIO = StringIO()  # Custom open stream
+    reporter: TextReporter = TextReporter(pylint_output)
+    results: Run = Run(['--disable=missing-module-docstring', 'temp.py'],
+                  reporter=reporter, exit=False)
+    errors: int = results.linter.stats.error
+    fatal: int = results.linter.stats.fatal
+    file_copy.close()  # Remember to close any file instances before removing the temp file
+    os.unlink(file_copy.name)  # unlink (remove) the file
+    return errors, fatal, pylint_output.getvalue()
 
 
 @celery_app.task(bind=True)

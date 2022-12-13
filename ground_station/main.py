@@ -23,4 +23,4 @@ if __name__ == "__main__":
     celery_app.worker_main(argv)
 # celery -A ground_station.celery_worker worker --loglevel=INFO --hostname=NSU@%h
 # celery -A ground_station.celery_worker flower --persistent=True --broker_api=http://guest:guest@rabbitmq:15672/api --basic_auth=user:pass
-# celery -A ground_station.celery_worker flower --persistent=True --broker_api=http://guest:guest@rabbitmq:15672/api/ --basic_auth=user:pass --tasks_columns=name,uuid,state,result,received,eta,started,runtime,worker
+# celery -A ground_station.main flower --persistent=True --broker_api=http://guest:guest@rabbitmq:15672/api/ --tasks_columns=name,uuid,state,result,received,eta,started,runtime,worker

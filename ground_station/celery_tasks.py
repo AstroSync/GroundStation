@@ -1,6 +1,7 @@
 from __future__ import annotations
 from io import StringIO
 import os
+from threading import Thread
 from tempfile import NamedTemporaryFile
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
@@ -54,8 +55,13 @@ def pylint_check(content: bytes) -> tuple[int, int, str]:
 def radio_task(self, **kwargs) -> str | None:
     session: SessionModel = SessionModel.parse_obj(kwargs)
     script: UserScriptModel | None = None
-    loc = {}
-    ws_client = WebSocketClient()
+    loc: dict = {}
+    ws_client = WebSocketClient(session.user_id)
+    NAKU().connect_default()
+    NAKU().radio.onReceive(ws_client.send)
+    NAKU().radio.onTrancieve(ws_client.send)
+    rotator_thread: Thread = Thread(name='rotator_thread', target=rotator_worker, kwargs=kwargs, daemon=True)
+    rotator_thread.start()
     try:
         if session.script_id is not None:
             script = script_store.download_script(session.script_id)
@@ -65,12 +71,20 @@ def radio_task(self, **kwargs) -> str | None:
                     exec(script.content, globals(), loc)
             else:
                 ws_client.send('there is no script')
+                print('there is not script')
         else:
             ws_client.send('start without script')
     except SoftTimeLimitExceeded as exc:
         print(exc)
+    NAKU().disconnect()
     ws_client.send('time is over')
     ws_client.close()
+    if rotator_thread.is_alive():
+        print('rotator thread still alive!')
+        rotator_thread.join(5)
+        if rotator_thread.is_alive():
+            print('rotator thread still alive!'.upper())
+    del ws_client
     result = loc.get('result', None)
     print(f'RADIO RESULT: {result}')
     session_result = ResultSessionModel(user_id=session.user_id, username=session.username,
@@ -82,6 +96,14 @@ def radio_task(self, **kwargs) -> str | None:
     NAKU().radio.clear_rx_buffer()
     return result
 
+def rotator_worker(**kwargs):
+    session = SessionModel.parse_obj(kwargs)
+    try:
+        path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
+                                                                    session.finish)
+        session_routine(TestSatellitePath(kwargs.get('duration_sec', 45)))  # type: ignore
+    except SoftTimeLimitExceeded as exc:
+        print(exc)
 
 @celery_app.task(bind=True)
 def rotator_task_emulation(self, **kwargs) -> None:

@@ -6,7 +6,16 @@ from ground_station.hardware.radio.sx127x_registers_and_params import SX127x_Reg
     SX127x_BW, SX127x_SF, SX127x_CR
 
 
-class SX127x_Driver:
+class Singleton(type):
+    _instances: dict = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
+class SX127x_Driver(metaclass = Singleton):
     reg: SX127x_Registers = SX127x_Registers()
     mode: SX127x_Mode = SX127x_Mode()
     isr: SX127x_ISR = SX127x_ISR()
@@ -23,6 +32,9 @@ class SX127x_Driver:
 
     def connect(self, port: str) -> bool:
         return self.interface.connect(port=port)
+
+    def disconnect(self):
+        return self.interface.disconnect()
 
     def reset(self) -> None:
         self.interface.reset()

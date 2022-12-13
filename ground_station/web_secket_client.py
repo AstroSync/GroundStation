@@ -1,33 +1,36 @@
 # from threading import Thread
 # import time
+from __future__ import annotations
+from uuid import UUID
 from websocket import create_connection
 
 
 
-class Singleton(type):
-    _instances: dict = {}
+# class Singleton(type):
+#     _instances: dict = {}
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+#     def __call__(cls, *args, **kwargs):
+#         if cls not in cls._instances:
+#             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+#         return cls._instances[cls]
 
-
-class WebSocketClient(metaclass=Singleton):
-    def __init__(self) -> None:
-        print('create ws client')
-        self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
+host = '10.6.1.97:8080'
+class WebSocketClient():
+    def __init__(self, user_id: UUID) -> None:
+        self.user_id = user_id
+        print(f'create ws client for {self.user_id} user')
+        self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
 
     def send(self, payload):
         if not self.ws.connected:
-            print('create ws client')
-            self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
+            print(f'create ws client for {self.user_id} user')
+            self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
         try:
             self.ws.send(payload)
         except BrokenPipeError as err:
             print('websocket client broken pipe\n')
             print(err)
-            self.ws = create_connection("ws://localhost:8080/websocket_api/ws/NSU_GS/123")
+            self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
 
     def close(self):
         return self.ws.close()
@@ -71,12 +74,20 @@ class WebSocketClient(metaclass=Singleton):
 #     print("Opened connection")
 
 # if __name__ == "__main__":
-#     # websocket.enableTrace(True)
-#     ws = websocket.WebSocketApp("ws://localhost:8080/websocket_api/ws/123",
-#                               on_open=on_open,
-#                               on_message=on_message,
-#                               on_error=on_error,
-#                               on_close=on_close)
+#     client = WebSocketClient()
+#     client.send('dfgfdgg')
+#     try:
+#         while(True):
+#             pass
+
+#     except KeyboardInterrupt:
+#         print('Shutdown radio driver')
+    # websocket.enableTrace(True)
+    # ws = websocket.WebSocketApp("ws://localhost:8080/websocket_api/ws/123",
+    #                           on_open=on_open,
+    #                           on_message=on_message,
+    #                           on_error=on_error,
+                            #   on_close=on_close)
 
 #     ws.run_forever()  # Set dispatcher to automatic reconnection, 5 second reconnect delay if connection closed unexpectedly
     # rel.signal(2, rel.abort)  # Keyboard Interrupt

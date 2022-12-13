@@ -1,23 +1,25 @@
+from __future__ import annotations
 import ast
 import threading
 import time
 from queue import Empty, Queue
-from typing import Any, NoReturn, Optional
+from typing import Any, NoReturn
 from serial import SerialBase
 import serial
 
 from ground_station.hardware.rotator.rotator_models import RotatorModel, RotatorAxisModel
 
 
-def try_to_connect(com_port: str, baudrate: int) -> Optional[SerialBase]:
-    try:  # TODO: мб стоит поднимать исключение?
+def try_to_connect(com_port: str, baudrate: int) -> SerialBase:
+    try:
         bus = serial.Serial(com_port, baudrate, write_timeout=2)
         bus.reset_input_buffer()
         bus.reset_output_buffer()
         return bus
     except serial.SerialException as err:
         print(f'Rotator connection error: {err}')
-        return None
+        raise
+
 
 class Singleton(type):
     _instances: dict = {}
@@ -26,16 +28,18 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
 class RotatorDriver(metaclass=Singleton):
     def __init__(self, api_name='rotator') -> None:
         self.api_name: str = api_name
-        self.reciever: Optional[SerialBase] = None
-        self.transmitter: Optional[SerialBase] = None
+        self.reciever: SerialBase
+        self.transmitter: SerialBase
         self.restart_counter: int = 0
         self.error_counter: int = 0
         self.__lock: threading.Lock = threading.Lock()
         self.rotator_model: RotatorModel = RotatorModel()
-        self.current_position: Optional[tuple[float, float]] = None
+        self.current_position: tuple[float, float] | None = None
         # self.__previous_position = None
         self.rx_thread: threading.Thread = threading.Thread(name="rotator RX thread", target=self.rx_loop, daemon=True)
         self.tx_thread: threading.Thread = threading.Thread(name="rotator TX thread", target=self.tx_loop, daemon=True)
@@ -45,7 +49,7 @@ class RotatorDriver(metaclass=Singleton):
         self.tx_queue = Queue()
         self.is_need_to_update_model: bool = False
         self.tx_thread_sleep_time: float = 0.1
-        self.connect(tx_port='/dev/ttyUSB1', rx_port='/dev/ttyUSB0')
+        self.connect(tx_port='/dev/ttyUSB1', rx_port='/dev/ttyUSB0')  # load from .env
 
     def connect(self, rx_port: str, tx_port: str) -> None:
         if not self.connection_flag:
@@ -67,6 +71,14 @@ class RotatorDriver(metaclass=Singleton):
                 print('Rotator does not connected')
         else:
             print('rotator already connected')
+
+    def disconnect(self):
+        if self.connection_flag:
+            self.stop_rotation()
+            self.reciever.close()
+            self.transmitter.close()
+            self.connection_flag = False
+
 
     def __repr__(self) -> str:
         return f'{self.rotator_model.__repr__}'

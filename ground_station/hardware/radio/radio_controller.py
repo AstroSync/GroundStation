@@ -94,6 +94,8 @@ class RadioController(SX127x_Driver):
         print('Radio is not connected!')
         return False
             # raise Exception("Can't connect to radio.")
+    def discoonnect(self):
+        return super().disconnect()
 
     def send_single(self, data: list[int] | bytes) -> None:
         # if self.get_operation_mode() != self.mode.STDBY_MODE:
@@ -103,7 +105,7 @@ class RadioController(SX127x_Driver):
         if not self.__stop_rx_routine_flag:
             self.stop_rx_thread()
         buffer_size = 255
-        timeout_counter_sec = 2
+        # timeout_counter_sec = 2
         if len(data) > buffer_size:
             chunks: list[list[int] | bytes] = [data[i:i + buffer_size] for i in range(0, len(data), buffer_size)]
             print(f'big parcel: {len(data)=}')

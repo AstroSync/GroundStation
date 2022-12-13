@@ -16,6 +16,8 @@ class SerialInterface:
     connection_status: bool = False
 
     def connect(self, port: str) -> bool:
+        if self.connection_status:
+            return True
         try:
             self.__interface = serial.Serial(port, 500000)
             if self.__interface.isOpen():
@@ -24,6 +26,11 @@ class SerialInterface:
             raise ConnectionError(f"Can\'t connect to {port}. Probably device is busy")
         except serial.SerialException:
             return False
+
+    def disconnect(self):
+        if not self.connection_status:
+            self.__interface.close()
+            self.connection_status = False
 
     @check_connection
     def read(self, address: int) -> int:

@@ -1,11 +1,7 @@
 import time
 from ground_station.hardware.naku_device_api import NAKU
-from ground_station.web_secket_client import WebSocketClient
 
 radio = NAKU().radio
-ws_client = WebSocketClient()
-radio.onReceive(ws_client.send)
-radio.onTrancieve(ws_client.send)
 
 while True:
     radio.send_single([14, 10, 6, 1, 201, 1, 1, 1, 1, 0, 28, 0, 0, 0, 1])

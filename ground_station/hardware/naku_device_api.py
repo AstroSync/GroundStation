@@ -2,11 +2,12 @@ from __future__ import annotations
 import time
 from datetime import datetime, timedelta
 from pytz import utc
+from serial.serialutil import SerialException
 from ground_station.hardware.radio.radio_controller import RadioController
 from ground_station.hardware.rotator.rotator_driver import RotatorDriver
 from ground_station.hardware.serial_utils import convert_to_port, get_available_ports
 from ground_station.propagator.propagate import SatellitePath
-from serial.serialutil import SerialException
+
 
 class Singleton(type):
     _instances: dict = {}
@@ -24,14 +25,12 @@ class NAKU(metaclass=Singleton):
 
         self.tle_list_struct: dict[str, datetime | list[str] | None] = {'last_update': None, 'tle_string_list': None}
 
-        # self.rotator: RotatorDriver = RotatorDriver()
+        self.rotator: RotatorDriver = RotatorDriver()
         self.radio: RadioController = RadioController()
 
         self.connection_status: bool = False
 
-        self.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
-                     rx_port_or_serial_id=f'/dev/ttyUSB0',
-                     radio_port_or_serial_id=f'/dev/ttyUSB2')
+        self.connect_default()
 
     # def get_device_state(self) -> dict[str, tuple[float, float]]:
     #     if self.rotator.current_position is None:
@@ -51,10 +50,23 @@ class NAKU(metaclass=Singleton):
                 self.connection_status = True
             except SerialException as err:
                 print(err)
+                raise
+
+    def connect_default(self):
+        self.connect(tx_port_or_serial_id=f'/dev/ttyUSB1',
+                     rx_port_or_serial_id=f'/dev/ttyUSB0',
+                     radio_port_or_serial_id=f'/dev/ttyUSB2')
+
+    def disconnect(self):
+        if self.connection_status:
+            return
+        self.radio.disconnect()
+        self.rotator.disconnect()
+        print('NAKU disconnected')
 
 
 def session_routine(path_points: SatellitePath) -> None:
-    print(f'Start session routine:\n{path_points}')
+    print(f'Start rotator session routine:\n{path_points.__repr__()}')
     normal_speed: int = 4
     fast_speed: int = 6
     az_trim_angle: float = 0.15 * path_points.az_rotation_direction

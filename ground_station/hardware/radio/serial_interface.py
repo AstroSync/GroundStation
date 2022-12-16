@@ -28,7 +28,7 @@ class SerialInterface:
             return False
 
     def disconnect(self):
-        if not self.connection_status:
+        if self.connection_status:
             self.__interface.close()
             self.connection_status = False
 

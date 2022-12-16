@@ -65,7 +65,7 @@ class UserStore(metaclass=Singleton):
         result: DeleteResult = self.scripts.delete_one({'script_id': script_id})
         return result.deleted_count
 
-script_store = UserStore('10.6.1.74', 'root', 'rootpassword')
+script_store = UserStore('localhost', 'root', 'rootpassword')
 
 if __name__ == '__main__':
     res = script_store.download_script(UUID('e32d478f-e305-4a74-94dc-47234d17d959'))

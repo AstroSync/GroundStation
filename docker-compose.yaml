@@ -24,27 +24,29 @@ services:
     #networks:
     #  - gs_network
     # command: tail -F anything
-  # redis:
-  #   image: 'redis:latest'
-  #   container_name: redis_container
-  #   ports:
-  #     - 6379:6379
-  #   environment:
-  #       - ALLOW_EMPTY_PASSWORD=yes
-
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: 'rabbitmq'
+  redis:
+    image: 'redis:latest'
+    container_name: redis_container
     ports:
-        - 5672:5672
-        - 15672:15672
-    volumes:
-      - .:/ground_station
-    #networks:
-    #  - gs_network
+      - 6379:6379
+    environment:
+        - ALLOW_EMPTY_PASSWORD=yes
+        - REDIS_TCP_KEEPALIVE=60
+
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   container_name: 'rabbitmq'
+  #   ports:
+  #       - 5672:5672
+  #       - 15672:15672
+  #   volumes:
+  #     - .:/ground_station
+  #   environment:
+  #     - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS="-rabbit consumer_timeout 36000000"
+
 
   mongodb:
-    image: mongo:4.4
+    image: mongo:4.4.6
     container_name: mongodb
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
@@ -53,9 +55,14 @@ services:
       - 27017:27017
     volumes:
       - ./mongodb_data_container:/data/db
+    command: mongod --quiet --logpath /dev/null
     #networks:
     #  - gs_network
-
+  # flower:
+  #     image: mher/flower:latest
+  #     command: ["flower", "--persistent=True", "--broker_api=http://guest:guest@rabbitmq:5672/api/", "--port=8888", "--tasks_columns=name,uuid,state,result,received,eta,started,runtime,worker"]
+  #     ports:
+  #         - 8888:8888
 #networks:
   #gs_network:
   #  external: true

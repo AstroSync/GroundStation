@@ -5,6 +5,7 @@ import os
 import time
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Literal
+from pytz import utc
 from skyfield.api import load
 from skyfield.sgp4lib import EarthSatellite
 from skyfield.timelib import Time, Timescale
@@ -37,10 +38,12 @@ def get_sat_from_local_tle_file(name: str) -> EarthSatellite | None:
 def request_celestrak_sat_tle(sat_name: str) -> EarthSatellite | None:
     start_time: float = time.time()
     try:
-        cubesat: EarthSatellite = load.tle_file(f"https://celestrak.org/NORAD/elements/gp.php?NAME={sat_name}")[0]
+        url = f"https://celestrak.org/NORAD/elements/gp.php?NAME={sat_name}".replace(' ', '%20')
+        cubesat: EarthSatellite = load.tle_file(url, reload=True)[0]
     except IndexError:
         return None
     print(f"Tle loading took {time.time() - start_time} seconds")
+    print(f'cubesat: {cubesat}')
     return cubesat
 
 
@@ -67,7 +70,7 @@ def convert_time_args(t_1: date | str, t_2: date | str | None = None) -> tuple[T
         t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.max.time(), tzinfo=timezone.utc))
     else:
         t_2_ts: Time = timescale.from_datetime(datetime.combine(t_2, datetime.min.time(), tzinfo=timezone.utc))
-    t_1_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.now().time(), tzinfo=timezone.utc))
+    t_1_ts: Time = timescale.from_datetime(datetime.combine(t_1, datetime.utcnow().time(), tzinfo=timezone.utc))
     return t_1_ts, t_2_ts
 
 
@@ -150,6 +153,19 @@ class SatellitePath:
         # 1 - 'up', -1 - 'down'
         self.az_rotation_direction: Literal[1, -1] = -1 + 2 * (self.azimuth[1] > self.azimuth[0])  # type: ignore
 
+    def to_dict(self):
+        length = len(self.altitude)
+        return {
+            'alt':          f'[{float(self.altitude[0]):.2f}, ..., {float(self.altitude[length//2]):.2f}, ..., {float(self.altitude[-1]):.2f}]',
+            'az':           f'[{float(self.azimuth[0]):.2f}, ..., {float(self.azimuth[length//2]):.2f}, ..., {float(self.azimuth[-1]):.2f}]',
+            'dist':         f'[{float(self.dist[0]):.2f}, ..., {float(self.dist[length//2]):.2f}, ..., {float(self.dist[-1]):.2f}]',
+            'alt_rate':     f'[{float(self.alt_rate[0]):.2f}, ..., {float(self.alt_rate[length//2]):.2f}, ..., {float(self.alt_rate[-1]):.2f}]',
+            'az_rate':      f'[{float(self.az_rate[0]):.2f}, ..., {float(self.az_rate[length//2]):.2f}, ..., {float(self.az_rate[-1]):.2f}]',
+            'dist_rate':    f'[{float(self.dist_rate[0]):.2f}, ..., {float(self.dist_rate[length//2]):.2f}, ..., {float(self.dist_rate[-1]):.2f}]',
+            't_points':     f'[{self.t_points[0]}, ..., {self.t_points[-1]}]',
+            'az_rotation_direction': int(self.az_rotation_direction)
+        }
+
     def __repr__(self) -> str:
         return f'Altitude deg from {self.altitude[0]:.2f} to {self.altitude[-1]:.2f}\n' \
                f'Azimuth deg from {self.azimuth[0]:.2f} to {self.azimuth[-1]:.2f}\n' \
@@ -169,8 +185,9 @@ class SatellitePath:
 
     def __next__(self) -> tuple[float, float, datetime]:
         if self.__index < len(self.altitude):
-            var: tuple[float, float, datetime] = (self.altitude[self.__index], self.azimuth[self.__index],
-                    self.t_points[self.__index])
+            var: tuple[float, float, datetime] = (self.altitude[self.__index],
+                                                  self.azimuth[self.__index],
+                                                  self.t_points[self.__index])
             self.__index += 1
             return var
         raise StopIteration
@@ -186,11 +203,21 @@ class TestSatellitePath:
         self.az_rate = np.ones(test_size)
         self.dist_rate = np.zeros(test_size)
         self.az_rotation_direction = 1
-        self.t_points = [datetime.now(tz=timezone.utc) + timedelta(seconds=6 + x) for x in range(test_size)]
+        self.t_points = [datetime.now().astimezone(utc) + timedelta(seconds=6 + x) for x in range(test_size)]
         self.__index: int = 0
     def __getitem__(self, key) -> tuple[float, float, datetime]:
         return (self.altitude.__getitem__(key), self.azimuth.__getitem__(key),
                self.t_points.__getitem__(key))
+
+    def __repr__(self) -> str:
+        return f'Altitude deg from {self.altitude[0]:.2f} to {self.altitude[-1]:.2f}\n' \
+               f'Azimuth deg from {self.azimuth[0]:.2f} to {self.azimuth[-1]:.2f}\n' \
+               f'Distance km from {self.dist.min():.2f} to {self.dist.max():.2f}\n' \
+               f'Altitude rate deg/s from {self.alt_rate.min():.2f} to {self.alt_rate.max():.2f}\n' \
+               f'Azimuth rate deg/s from {self.az_rate.min():.2f} to {self.az_rate.max():.2f}\n' \
+               f'Distance rate km/s from {self.dist_rate.min():.2f} to {self.dist_rate.max():.2f}\n' \
+               f'Time points: from {self.t_points[0]} to {self.t_points[-1]}.\n' \
+               f'Duration: {(self.t_points[-1] - self.t_points[0]).seconds} sec\n'
 
     def __iter__(self):
         return self
@@ -203,7 +230,7 @@ class TestSatellitePath:
             return var
         raise StopIteration
 
-# def convert_degrees(seq):
+# def convert_az_degrees(seq):
 #     """Recalculate angle sequence when it transits over 360 degrees.
 #     e.g.: [358.5, 359.6, 0.2, 1.1] -> [358.5, 359.6, 360.2, 361.1]
 #           [1.1, 0.2, 359.6, 358.5] -> [1.1, 0.2, -0.4, -1.5]
@@ -237,6 +264,7 @@ def angle_points_for_linspace_time(sat: str, observer: str, t_1: datetime, t_2: 
     time_points: Time = timescale.linspace(timescale.from_datetime(t_1), timescale.from_datetime(t_2),
                                      int((t_2 - t_1).seconds * sampling_rate))
     satellite: EarthSatellite | None = get_sat_from_local_tle_file(sat.upper()) if local_tle else request_celestrak_sat_tle(sat.upper())
+    print(satellite)
     if satellite is not None:
         sat_position: VectorSum = (satellite - OBSERVERS[observer])
     else:

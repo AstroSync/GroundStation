@@ -22,9 +22,6 @@ class LoRaTxPacket:
 
 
 class RadioController(SX127x_Driver):
-    __stop_rx_routine_flag: bool = False
-    __rx_timeout_sec: int = 30
-
     def __init__(self, api_name='radio', **kwargs) -> None:
         super().__init__(**kwargs)  # super(LoRa_Controller, self).__init__(**kwargs)
         self.api_name: str = api_name
@@ -33,18 +30,20 @@ class RadioController(SX127x_Driver):
         self.spread_factor: int = kwargs.get('sf', self.sf.SF10)  # spreading factor  SF10
         self.freq: int = kwargs.get('freq', 436700000)   # 436700000
         self.crc: bool = kwargs.get('crc', True)  # check crc
-        self.tx_power: int = kwargs.get('tx_power', 10)  # dB
+        self.tx_power: int = kwargs.get('tx_power', 14)  # dB
         self.sync_word: int = kwargs.get('sync_word', 0x12)
         self.preamble_len: int = kwargs.get('preamble_len', 8)
         self.auto_gain_control: bool = kwargs.get('agc', True)  # auto gain control
         self.payload_size: int = kwargs.get('payload_size', 10)  # for implicit mode
-        self.lna_gain: int = kwargs.get('lna_gain', 3)  # 1 - min; 6 - max
+        self.lna_gain: int = kwargs.get('lna_gain', 5)  # 1 - min; 6 - max
         self.lna_boost: bool = kwargs.get('lna_boost', False)  # 150% LNA current
         self.implicit_mode: bool = kwargs.get('implicit_mode', False)  # fixed payload size
 
         self.__rx_thread = threading.Thread(name='rx_thread', target=self.rx_routine, daemon=True)
         self.__rx_callback: Callable | None = None
         self.__tx_callback: Callable | None = None
+        self.__stop_rx_routine_flag: bool = False
+        self.__rx_timeout_sec: int = 30
         self.__rx_buffer: list = []
 
     def __init(self) -> None:
@@ -63,7 +62,7 @@ class RadioController(SX127x_Driver):
         self.set_low_noize_amplifier(self.lna_gain, self.lna_boost)
         self.set_rx_tx_fifo_base_addr(0, 0)
         self.set_freq(self.freq)
-        self.set_low_data_rate_optimize(False)
+        self.set_low_data_rate_optimize(True)
 
     def onReceive(self, callback: Callable):
         self.__rx_callback = callback
@@ -72,7 +71,7 @@ class RadioController(SX127x_Driver):
         self.__tx_callback = callback
 
     def start_rx_thread(self) -> None:
-        if self.__rx_thread is not self.__rx_thread.is_alive():
+        if not self.__rx_thread.is_alive():
             print('Start Rx thread')
             self.__stop_rx_routine_flag = False
             self.__rx_thread = threading.Thread(name='radio_rx_thread', target=self.rx_routine, daemon=True)
@@ -80,7 +79,7 @@ class RadioController(SX127x_Driver):
 
     def stop_rx_thread(self) -> None:
         self.__stop_rx_routine_flag = True
-        self.__rx_thread.join()
+        # self.__rx_thread.join(timeout=0.8)
 
     def connect(self, port: str) -> bool:
         if super().connect(port):
@@ -94,7 +93,8 @@ class RadioController(SX127x_Driver):
         print('Radio is not connected!')
         return False
             # raise Exception("Can't connect to radio.")
-    def discoonnect(self):
+    def disconnect(self):
+        self.stop_rx_thread()
         return super().disconnect()
 
     def send_single(self, data: list[int] | bytes) -> None:

@@ -1,27 +1,16 @@
-from typing import Optional
+from __future__ import annotations
+from pydantic import BaseModel
 
 
-class RotatorAxisModel:
-    def __init__(self, **kwargs) -> None:
-        self.position: float = kwargs.get('position', None)
-        self.speed: float = kwargs.get('speed', None)
-        self.acceleration: float = kwargs.get('acceleration', None)
-        self.min_angle: float = kwargs.get('min_angle', None)
-        self.max_angle: float = kwargs.get('max_angle', None)
-        self.boundary_start: float = kwargs.get('boundary_start', None)
-        self.boundary_end: float = kwargs.get('boundary_end', None)
-        self.limits: bool = kwargs.get('limits', None)
-
-    def update(self, pos: Optional[float], speed: Optional[float], accel: float, boundary_start: float,
-               boundary_end: float, limits: bool) -> None:
-        if pos is not None:
-            self.position: float = pos
-        if speed is not None:
-            self.speed: float = speed
-        self.acceleration: float = accel
-        self.boundary_start: float = boundary_start
-        self.boundary_end: float = boundary_end
-        self.limits: bool = limits
+class RotatorAxisModel(BaseModel):
+    position: float = 0
+    speed: float = 0
+    acceleration: float = 0
+    min_angle: float = 0
+    max_angle: float = 0
+    boundary_start: float = 0
+    boundary_end: float = 0
+    limits: bool = True
 
     def __str__(self) -> str:
         return f'Pos: {self.position}\nSpeed: {self.speed}\nAccel: {self.acceleration}\nMin angle: {self.min_angle}\n' \
@@ -29,13 +18,7 @@ class RotatorAxisModel:
                f'Boundary end angle: {self.boundary_end}\nLimits: {self.limits}'
 
 
-class RotatorModel:
-    def __init__(self, **kwargs) -> None:
-        self.azimuth: RotatorAxisModel = RotatorAxisModel(**kwargs)
-        self.elevation: RotatorAxisModel = RotatorAxisModel(**kwargs)
+class RotatorModel(BaseModel):
+    azimuth: RotatorAxisModel = RotatorAxisModel()
+    elevation: RotatorAxisModel = RotatorAxisModel()
 
-    def dict(self):
-        return self.__dict__
-
-    def __str__(self) -> str:
-        return f'Azimuth:\n{self.azimuth}\n\nElevation:\n{self.elevation}\n'

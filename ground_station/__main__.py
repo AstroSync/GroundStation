@@ -1,7 +1,7 @@
-from ground_station.main import celery_app
+from ground_station.main import app
 argv = [
     'worker',
     '--loglevel=INFO',
     '--hostname=NSU'
 ]
-celery_app.worker_main(argv)
+app.worker_main(argv)

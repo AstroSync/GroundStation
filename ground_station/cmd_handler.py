@@ -2,7 +2,6 @@ import ast
 import inspect
 import re
 from ground_station.hardware.naku_device_api import NAKU
-from ground_station.hardware.rotator.rotator_driver import RotatorDriver
 
 
 def get_available_methods():
@@ -17,7 +16,7 @@ def get_available_methods():
                 "method": func,
                 'args': str(inspect.signature(getattr(device_module, func)))
             }
-            for device_module in [RotatorDriver(), NAKU().radio] for func in dir(device_module)
+            for device_module in [NAKU().rotator, NAKU().radio] for func in dir(device_module)
             if callable(getattr(device_module, func)) and (func.startswith("set_") or func.startswith("get_") or
                                                            func.startswith("send"))]
 

@@ -3,7 +3,6 @@ import ast
 import threading
 import time
 from queue import Empty, Queue
-from typing import Any, NoReturn
 from serial import SerialBase
 import serial
 
@@ -35,26 +34,30 @@ class RotatorDriver(metaclass=Singleton):
         self.api_name: str = api_name
         self.reciever: SerialBase
         self.transmitter: SerialBase
+        self.tx_thread: threading.Thread
+        self.rx_thread: threading.Thread
+
         self.restart_counter: int = 0
         self.error_counter: int = 0
         self.__lock: threading.Lock = threading.Lock()
         self.rotator_model: RotatorModel = RotatorModel()
         self.current_position: tuple[float, float] | None = None
         # self.__previous_position = None
-        self.rx_thread: threading.Thread = threading.Thread(name="rotator RX thread", target=self.rx_loop, daemon=True)
-        self.tx_thread: threading.Thread = threading.Thread(name="rotator TX thread", target=self.tx_loop, daemon=True)
         self.print_flag: bool = False
         self.connection_flag: bool = False
 
         self.tx_queue = Queue()
         self.is_need_to_update_model: bool = False
         self.tx_thread_sleep_time: float = 0.1
-        self.connect(tx_port='/dev/ttyUSB1', rx_port='/dev/ttyUSB0')  # load from .env
+        self.tx_thread_stop_flag = False
+        self.rx_thread_stop_flag = False
+        # self.connect(tx_port='/dev/ttyUSB1', rx_port='/dev/ttyUSB0')  # load from .env
 
     def connect(self, rx_port: str, tx_port: str) -> None:
         if not self.connection_flag:
             self.reciever = try_to_connect(rx_port, 115200)
             self.transmitter = try_to_connect(tx_port, 115200)
+
             if self.reciever is not None and self.transmitter is not None:
                 try:
                     rotator_version: str = self.get_version()
@@ -64,6 +67,10 @@ class RotatorDriver(metaclass=Singleton):
                 if not self.reciever.is_open or not self.transmitter.is_open:
                     raise RuntimeError(f'Tx or Rx line is not open')
                 self.connection_flag = True
+                self.rx_thread_stop_flag = False
+                self.tx_thread_stop_flag = False
+                self.rx_thread: threading.Thread = threading.Thread(name="rotator RX thread", target=self.rx_loop, daemon=True)
+                self.tx_thread: threading.Thread = threading.Thread(name="rotator TX thread", target=self.tx_loop, daemon=True)
                 self.rx_thread.start()
                 self.tx_thread.start()
                 self.queue_request_condition()
@@ -72,16 +79,28 @@ class RotatorDriver(metaclass=Singleton):
         else:
             print('rotator already connected')
 
+    def connect_default(self):
+        self.connect(tx_port='/dev/ttyUSB1', rx_port='/dev/ttyUSB0')
+
     def disconnect(self):
         if self.connection_flag:
-            self.stop_rotation()
+            self.rx_thread_stop_flag = True
+            self.tx_thread_stop_flag = True
+            self.tx_thread.join(0.5)
+            self.rx_thread.join(0.5)
+            self.transmitter.write(b'S\r')
+            time.sleep(0.2)
             self.reciever.close()
             self.transmitter.close()
             self.connection_flag = False
+            print('rotator disconnected')
 
 
     def __repr__(self) -> str:
         return f'{self.rotator_model.__repr__}'
+
+    def get_config(self):
+        return self.rotator_model.dict()
 
     def set_config(self, kwargs)-> None:
         """
@@ -121,14 +140,14 @@ class RotatorDriver(metaclass=Singleton):
         self.tx_queue.put(b'G0I\r')
         self.tx_queue.put(b'G1I\r')
 
-    def _print(self, message: Any) -> None:
+    def _print(self, message) -> None:
         if self.print_flag:
             print(f'{message}')
 
-    def tx_loop(self) -> NoReturn:
+    def tx_loop(self):
         if self.transmitter is None:
             raise RuntimeError('Rotator TX channel object must not be None')
-        while True:
+        while not self.tx_thread_stop_flag:
             time.sleep(self.tx_thread_sleep_time)
             with self.__lock:
                 try:
@@ -151,7 +170,7 @@ class RotatorDriver(metaclass=Singleton):
         if self.reciever is None:
             raise RuntimeError('Rotator RX channel must not be None')
         try:
-            while True:
+            while not self.rx_thread_stop_flag:
                 try:
                     raw_data: bytes = self.reciever.read_until(b'\r')
 
@@ -304,8 +323,8 @@ if __name__ == '__main__':
     # time.sleep(2)
     rotator.print_flag = True
     # time.sleep(1)
-    # rotator.set_angle(2, 2)
-    rotator.get_position()
+    rotator.set_angle(2, 2)
+    print(rotator.get_position())
     # rotator.set_calibration(0, 127)
     # rotator.set_calibration(1, 90)
     # rotator.get_position()

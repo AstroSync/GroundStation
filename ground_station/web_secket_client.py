@@ -3,7 +3,7 @@
 from __future__ import annotations
 from uuid import UUID
 from websocket import create_connection
-
+from websocket import WebSocket
 
 
 # class Singleton(type):
@@ -16,24 +16,32 @@ from websocket import create_connection
 
 host = '10.6.1.97:8080'
 class WebSocketClient():
+    ws : WebSocket | None = None
     def __init__(self, user_id: UUID) -> None:
         self.user_id = user_id
         print(f'create ws client for {self.user_id} user')
-        self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
-
-    def send(self, payload):
-        if not self.ws.connected:
-            print(f'create ws client for {self.user_id} user')
-            self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
         try:
-            self.ws.send(payload)
-        except BrokenPipeError as err:
-            print('websocket client broken pipe\n')
-            print(err)
             self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+        except TimeoutError as err:
+            print(err)
+    def send(self, payload):
+        if self.ws is not None:
+            if not self.ws.connected:
+                print(f'create ws client for {self.user_id} user')
+                self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+            try:
+                self.ws.send(payload)
+            except BrokenPipeError as err:
+                print('websocket client broken pipe\n')
+                print(err)
+            self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+            self.ws.send(payload)
+        else:
+            print('ws is not connected and can not send msg')
 
     def close(self):
-        return self.ws.close()
+        if self.ws is not None:
+            return self.ws.close()
 
 
 

@@ -13,6 +13,7 @@ task_serializer = 'json'
 result_serializer = 'json'
 task_track_started = True
 # result_extended = True
-# task_ignore_result = True
-broker_transport_option = {'visibility_timeout': 3600000}
+# task_ignore_result = True\
+visibility_timeout = 60000000
+result_backend_transport_options = broker_transport_options = { 'visibility_timeout': 60000000 }
 # timezone = 'Asia/Novosibirsk'

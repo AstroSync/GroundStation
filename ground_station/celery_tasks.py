@@ -82,10 +82,14 @@ def radio_task(**kwargs) -> None:
     session: SessionModel = SessionModel.parse_obj(kwargs)
     session.start = session.start.astimezone(timezone.utc)
     session.finish = session.finish.astimezone(timezone.utc)
+    if datetime.now().astimezone(timezone.utc) > session.finish:
+        print('Task missed')
+        return
 
     script: UserScriptModel | None = None
     loc: dict = {}
-    ws_client = WebSocketClient(session.user_id)
+    ws_client: WebSocketClient = WebSocketClient(session.user_id)
+    ws_client.send(f'start session with {session.sat_name}')
     NAKU().connect_default()
     NAKU().radio.onReceive(ws_client.send)
     NAKU().radio.onTrancieve(ws_client.send)
@@ -112,6 +116,8 @@ def radio_task(**kwargs) -> None:
                 print('there is not script')
         else:
             ws_client.send('start without script')
+            while True:
+                pass
     except SoftTimeLimitExceeded as exc:
         print(exc)
     ws_client.send('time is over')
@@ -129,7 +135,7 @@ def radio_task(**kwargs) -> None:
     session_result = ResultSessionModel(user_id=session.user_id, username=session.username,
                                         script_id=session.script_id, sat_name=session.sat_name, station=session.station,
                                         registration_time=session.registration_time, start_time=session.start,
-                                        priority=session.priority, duration_sec=session.duration_sec)
+                                        priority=session.priority, duration_sec=session.duration_sec, status='SUCCESS')
     session_result.result = NAKU().radio.get_rx_buffer()
     UserStore('10.6.1.74', 'root', 'rootpassword').save_session_result(session_result)
     print('result saved in database')

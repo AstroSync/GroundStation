@@ -47,6 +47,7 @@ class SessionModel(BaseModel):
 
 class ResultSessionModel(BaseModel):
     user_id: UUID
+    status: str
     username: str
     script_id: UUID | None
     sat_name: str

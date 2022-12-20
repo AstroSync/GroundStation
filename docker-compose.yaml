@@ -27,11 +27,14 @@ services:
   redis:
     image: 'redis:latest'
     container_name: redis_container
-    ports:
-      - 6379:6379
+    # ports:
+    #   - 6379:6379
+    # volumes:
+    #   - ./redis.conf:/usr/local/etc/redis/redis.conf
     environment:
         - ALLOW_EMPTY_PASSWORD=yes
         - REDIS_TCP_KEEPALIVE=60
+        - REDIS_TIMEOUT=60
 
   # rabbitmq:
   #   image: rabbitmq:3-management-alpine

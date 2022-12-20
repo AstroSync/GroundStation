@@ -44,13 +44,18 @@ class NAKU(metaclass=Singleton):
                                     radio_port=radio_port_or_serial_id)
             if not all(ports.values()):
                 raise RuntimeError(f'Some ports are unavailable {ports}. There are only next ports: {get_available_ports()}')
-            self.rotator.connect(rx_port=ports['rx_port'], tx_port=ports['tx_port'])    # type: ignore
-            try:
-                self.radio.connect(port=ports['radio_port'])  # type: ignore
-                self.connection_status = True
-            except SerialException as err:
-                print(f'NAKU connection error:', err)
-                raise
+            radio_port: str | None = ports['radio_port']
+            rotator_rx_port: str | None = ports['rx_port']
+            rotator_tx_port: str | None = ports['tx_port']
+            if rotator_rx_port is not None and rotator_tx_port is not None:
+                self.rotator.connect(rx_port=rotator_rx_port, tx_port=rotator_tx_port)
+            if radio_port is not None:
+                try:
+                    self.radio.connect(port=radio_port)
+                    self.connection_status = True
+                except SerialException as err:
+                    print(f'NAKU connection error:', err)
+                    raise
         else:
             print('NAKU already connected')
 
@@ -92,8 +97,10 @@ def session_routine(path_points: SatellitePath) -> None:
         NAKU().rotator.set_speed(normal_speed, normal_speed)
         time.sleep(0.2)
     print('start rotator session routine')
-    for altitude, azimuth, time_point in path_points:
-        print(f'next point: {azimuth:.2f}, {altitude:.2f}')
+    point_count = len(path_points.t_points)
+    for i, (altitude, azimuth, time_point) in enumerate(path_points):
+        print(f'next point: ({azimuth:.2f}, {altitude:.2f})\tstep {i}/{point_count}')
+        i+=1
         # if NAKU().rotator.rotator_model.azimuth.speed > normal_speed:
         #     NAKU().rotator.set_speed(normal_speed, normal_speed)
             # Unsupported operand types for > ("datetime" and "timedelta")

@@ -11,7 +11,7 @@ from ground_station.hardware.rotator.rotator_models import RotatorModel, Rotator
 
 def try_to_connect(com_port: str, baudrate: int) -> SerialBase:
     try:
-        bus = serial.Serial(com_port, baudrate, write_timeout=2)
+        bus = serial.Serial(com_port, baudrate, write_timeout=2, timeout=2)
         bus.reset_input_buffer()
         bus.reset_output_buffer()
         return bus
@@ -185,7 +185,7 @@ class RotatorDriver(metaclass=Singleton):
                     elif 'OK' in decoded_data:
                         with self.__lock:
                             # self.__previous_position = self.current_position
-                            position: list[int] = [int(ast.literal_eval(x.lstrip('0'))) for x in decoded_data[2:].split(' ')]
+                            position: list[float] = [float(ast.literal_eval(x.lstrip('0'))) for x in decoded_data[2:].split(' ')]
                             self.current_position = (position[0], position[1])
                             self.rotator_model.azimuth.position = self.current_position[0]
                             self.rotator_model.elevation.position = self.current_position[1]
@@ -282,9 +282,15 @@ class RotatorDriver(metaclass=Singleton):
             if self.transmitter and self.reciever is not None:
                 self.transmitter.write(cmd)
                 answer = []
+                timeout_start_time: float = time.time()
                 while answer_length:
-                    answer.append(self.reciever.read_until(b'\r').decode('cp1251'))
+                    result: str = self.reciever.read_until(b'\r').decode('cp1251')
+                    if 'MOTOR ERROR' in result:
+                        raise Exception('MOTOR ERROR')
+                    answer.append(result)
                     answer_length -= 1
+                    if time.time() - timeout_start_time > 5:
+                        raise TimeoutError(f'Rotator Rx timeout! Rx buf: {answer}')
                 return ''.join(answer).replace('\r', '\n')
             raise Exception('Rotator ports have issues!')
 

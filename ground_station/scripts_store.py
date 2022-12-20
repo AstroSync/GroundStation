@@ -1,6 +1,7 @@
 from __future__ import annotations
 # from datetime import datetime, timedelta
 from uuid import UUID
+from bson import CodecOptions, UuidRepresentation
 from pymongo import MongoClient, ASCENDING
 from pymongo.database import Database
 from pymongo.collection import Collection
@@ -24,10 +25,11 @@ class UserStore(metaclass=Singleton):
             client: MongoClient = MongoClient(host=host, port=27017, username=username, uuidRepresentation='standard',
                                               password=password, authMechanism='DEFAULT',
                                               serverSelectionTimeoutMS=2000)
-            db: Database = client['UserData']
+            db: Database = client.get_database('UserData')
             print("Connected to MongoDB")
-            self.scripts: Collection = db['scripts']
-            self.sessions: Collection = db['sessions']
+            codec_options = CodecOptions(tz_aware=True, uuid_representation=UuidRepresentation.STANDARD)
+            self.scripts: Collection = db.get_collection('scripts', codec_options=codec_options)
+            self.sessions: Collection = db.get_collection('sessions', codec_options=codec_options)
             self.scripts.create_index([( "user_id", ASCENDING )])
         except TimeoutError as e:
             print(f'Database connection failed: {e}')

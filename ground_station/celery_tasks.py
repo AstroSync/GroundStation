@@ -9,7 +9,6 @@ import time
 from pylint.lint import Run
 from pylint.reporters.text import TextReporter
 from celery.exceptions import SoftTimeLimitExceeded
-from pytz import utc
 # from celery.signals import task_prerun, task_postrun
 from ground_station.main import app
 from ground_station.hardware.naku_device_api import NAKU, session_routine
@@ -142,10 +141,10 @@ def radio_task(**kwargs) -> None:
     NAKU().radio.clear_rx_buffer()
 
 def rotator_worker_test(**kwargs):
-    session = SessionModel.parse_obj(kwargs)
+    # session = SessionModel.parse_obj(kwargs)
     try:
-        path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
-                                                                    session.finish)
+        # path_points: SatellitePath = angle_points_for_linspace_time(session.sat_name, session.station, session.start,
+        #                                                             session.finish)
         session_routine(TestSatellitePath(kwargs.get('duration_sec', 45)))  # type: ignore
     except SoftTimeLimitExceeded as exc:
         print(exc)

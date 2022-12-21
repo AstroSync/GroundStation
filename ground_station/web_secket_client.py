@@ -1,6 +1,7 @@
 # from threading import Thread
 # import time
 from __future__ import annotations
+from ssl import SSLError
 from uuid import UUID
 from websocket import create_connection
 from websocket import WebSocket
@@ -14,34 +15,44 @@ from websocket import WebSocket
 #             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
 #         return cls._instances[cls]
 
-host = '10.6.1.97:8080'
+host = 'api.astrosync.ru'
+# host = '10.6.1.97:8080'
 class WebSocketClient():
     ws : WebSocket | None = None
     def __init__(self, user_id: UUID) -> None:
         self.user_id = user_id
         print(f'create ws client for {self.user_id} user')
         try:
-            self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+            self.ws = create_connection(f"wss://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
         except TimeoutError as err:
             print(err)
     def send(self, payload):
         if self.ws is not None:
-            if not self.ws.connected:
-                print(f'create ws client for {self.user_id} user')
-                self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
             try:
-                self.ws.send(payload)
-            except BrokenPipeError as err:
-                print('websocket client broken pipe\n')
+                if not self.ws.connected:
+                    print(f'create ws client for {self.user_id} user')
+                    self.ws = create_connection(f"wss://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+                try:
+                    self.ws.send(payload)
+                except BrokenPipeError as err:
+                    print('websocket client broken pipe\n')
+                    print(err)
+                    self.resend(payload)
+            except SSLError as err:
+                print('ws has ssl error!')
                 print(err)
-            self.ws = create_connection(f"ws://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
-            self.ws.send(payload)
+                self.resend(payload)
         else:
             print('ws is not connected and can not send msg')
 
     def close(self):
         if self.ws is not None:
             return self.ws.close()
+
+    def resend(self, payload):
+        self.close()
+        self.ws = create_connection(f"wss://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+        self.ws.send(payload)
 
 
 
@@ -82,10 +93,11 @@ class WebSocketClient():
 #     print("Opened connection")
 
 # if __name__ == "__main__":
-#     client = WebSocketClient()
+#     client = WebSocketClient(UUID('f2bc9fb1-e6dd-4bd3-8fd6-9f03e1664f19'))
 #     client.send('dfgfdgg')
 #     try:
 #         while(True):
+#             print(client.ws.recv())
 #             pass
 
 #     except KeyboardInterrupt:

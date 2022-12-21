@@ -1,9 +1,12 @@
 from __future__ import annotations
+from datetime import datetime
 import threading
 import time
 from typing import Callable
 from dataclasses import dataclass
 from ast import literal_eval
+
+from pytz import UTC
 from ground_station.hardware.radio.sx127x_driver import SX127x_Driver
 
 
@@ -45,6 +48,7 @@ class RadioController(SX127x_Driver):
         self.__stop_rx_routine_flag: bool = False
         self.__rx_timeout_sec: int = 30
         self.__rx_buffer: list = []
+        self.__lock = threading.Lock()
 
     def __init(self) -> None:
         self.interface.reset()
@@ -123,7 +127,8 @@ class RadioController(SX127x_Driver):
             self.interface.run_tx_then_rx_cont()
 
         if self.__tx_callback is not None:
-            self.__tx_callback(f'tx > {data}')
+            with self.__lock:
+                self.__tx_callback(f'{datetime.now().astimezone(UTC).strftime("%H:%M:%S %d-%m-%Y")} tx > {data}')
 
         if self.__stop_rx_routine_flag:
             self.start_rx_thread()
@@ -216,7 +221,8 @@ class RadioController(SX127x_Driver):
                     print(pkt)
                     self.__rx_buffer.append(pkt.data)
                     if self.__rx_callback is not None:
-                        self.__rx_callback(f'rx < {pkt.data}')
+                        with self.__lock:
+                            self.__rx_callback(f'{datetime.now().astimezone(UTC).strftime("%H:%M:%S %d-%m-%Y")} rx < {pkt.data}')
             time.sleep(0.5)
 
     def user_cli(self) -> None:

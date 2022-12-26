@@ -15,7 +15,8 @@ from websocket import WebSocket
 #             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
 #         return cls._instances[cls]
 
-host = 'api.astrosync.ru'
+host = 'api.astrosync.ru'  # '192.168.196.195:8086' # 84.237.52.3
+ssl = 'wss' if host == 'api.astrosync.ru' else 'ws'
 # host = '10.6.1.97:8080'
 class WebSocketClient():
     ws : WebSocket | None = None
@@ -23,7 +24,7 @@ class WebSocketClient():
         self.user_id = user_id
         print(f'create ws client for {self.user_id} user')
         try:
-            self.ws = create_connection(f"wss://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+            self.ws = create_connection(f"{ssl}://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
         except TimeoutError as err:
             print(err)
     def send(self, payload):
@@ -31,7 +32,7 @@ class WebSocketClient():
             try:
                 if not self.ws.connected:
                     print(f'create ws client for {self.user_id} user')
-                    self.ws = create_connection(f"wss://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+                    self.ws = create_connection(f"{ssl}://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
                 try:
                     self.ws.send(payload)
                 except BrokenPipeError as err:
@@ -51,7 +52,7 @@ class WebSocketClient():
 
     def resend(self, payload):
         self.close()
-        self.ws = create_connection(f"wss://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
+        self.ws = create_connection(f"{ssl}://{host}/websocket_api/ws/NSU_GS/{self.user_id}")
         self.ws.send(payload)
 
 
@@ -92,16 +93,15 @@ class WebSocketClient():
 # def on_open(ws):
 #     print("Opened connection")
 
-# if __name__ == "__main__":
-#     client = WebSocketClient(UUID('f2bc9fb1-e6dd-4bd3-8fd6-9f03e1664f19'))
-#     client.send('dfgfdgg')
-#     try:
-#         while(True):
-#             print(client.ws.recv())
-#             pass
+if __name__ == "__main__":
+    client = WebSocketClient(UUID('f2bc9fb1-e6dd-4bd3-8fd6-9f03e1664f19'))
+    client.send('dfgfdgg')
+    try:
+        while(True):
+            pass
 
-#     except KeyboardInterrupt:
-#         print('Shutdown radio driver')
+    except KeyboardInterrupt:
+        print('Shutdown radio driver')
     # websocket.enableTrace(True)
     # ws = websocket.WebSocketApp("ws://localhost:8080/websocket_api/ws/123",
     #                           on_open=on_open,

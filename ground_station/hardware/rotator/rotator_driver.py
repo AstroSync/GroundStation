@@ -144,7 +144,7 @@ class RotatorDriver(metaclass=Singleton):
         if self.print_flag:
             print(f'{message}')
 
-    def tx_loop(self):
+    def tx_loop(self) -> None:
         if self.transmitter is None:
             raise RuntimeError('Rotator TX channel object must not be None')
         while not self.tx_thread_stop_flag:
